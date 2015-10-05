@@ -18,6 +18,8 @@ class SearchController {
     @Autowired
     protected ISeacher seacher
 
+
+    //TODO: no http://tourism-il.livejournal.com/2002/03/11/ in index!!
     @RequestMapping("/search")
     @ResponseBody String search(
             @RequestParam("term") String term,

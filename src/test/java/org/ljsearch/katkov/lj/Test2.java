@@ -22,14 +22,14 @@ public class Test2 {
         IndexReader reader =  DirectoryReader.open(FSDirectory.open(Paths.get("D:\\temp\\ljsearch\\")));
         IndexSearcher searcher = new IndexSearcher(reader);
 
-        printResults( "меню",searcher);
-        printResults( "Синай",searcher);
+        printResults( "время",searcher);
+        /*printResults( "Синай",searcher);
         printResults( "хушот",searcher);
         printResults( "ночёвка",searcher);
         printResults( "Англия",searcher);
         printResults( "Бейтар",searcher);
         printResults( "пятница",searcher);
-
+*/
     }
 
     private static void printResults(final String searchWords, IndexSearcher searcher) throws ParseException, IOException {
