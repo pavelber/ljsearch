@@ -2,6 +2,7 @@ package org.ljsearch.services
 
 import groovy.swing.factory.BeanFactory
 import org.ljsearch.entity.IJournalRepository
+import org.ljsearch.lucene.LuceneIndexer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,8 +17,8 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar
 /**
  * Created by Pavel on 9/29/2015.
  */
-@Configuration
-@EnableScheduling
+//@Configuration
+//@EnableScheduling
 class StartDownloads implements SchedulingConfigurer {
 
     static Logger logger = LoggerFactory.getLogger(StartDownloads.class)
@@ -28,6 +29,9 @@ class StartDownloads implements SchedulingConfigurer {
 
     @Autowired
     ApplicationContext factory
+
+    @Autowired
+    LuceneIndexer indexer
 
     //TODO: take new w/o restart!
     @Bean

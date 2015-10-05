@@ -3,7 +3,6 @@ package org.ljsearch.katkov.lj;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -17,22 +16,29 @@ import org.ljsearch.lucene.QueryHelper;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-public class Test2 {
+public class Test3 {
     public static void main(String[] args) throws Exception {
-        IndexReader reader =  DirectoryReader.open(FSDirectory.open(Paths.get("D:\\temp\\ljsearch\\")));
+        LuceneIndexer indexer = new LuceneIndexer();
+        indexer.setIndexDir("D:\\temp");
+        indexer.init();
+        indexer.add("titte заголовок","мы включили apache","potrebitel_il","javax_slr");
+        indexer.add("сады","мы гуляли в саду","tourism_il","elcy_");
+      //  indexer.optimizeAndClose();
+        IndexReader reader =  DirectoryReader.open(FSDirectory.open(Paths.get("D:\\temp")));
         IndexSearcher searcher = new IndexSearcher(reader);
 
-        printResults( "меню",searcher);
-        printResults( "Синай",searcher);
-        printResults( "хушот",searcher);
-        printResults( "ночёвка",searcher);
-        printResults( "Англия",searcher);
-        printResults( "Бейтар",searcher);
-        printResults( "пятница",searcher);
+        printResults(LuceneBinding.TITLE_FIELD, "сад",searcher);
+        printResults(LuceneBinding.RUS_TITLE_FIELD, "сад",searcher);
+        printResults(LuceneBinding.CONTENT_FIELD, "мы",searcher);
+        printResults(LuceneBinding.CONTENT_FIELD, "сад",searcher);
+        printResults(LuceneBinding.RUS_CONTENT_FIELD, "сад",searcher);
+        printResults(LuceneBinding.CONTENT_FIELD, "apaches",searcher);
+        printResults(LuceneBinding.ENG_CONTENT_FIELD, "apaches",searcher);
 
     }
 
-    private static void printResults(final String searchWords, IndexSearcher searcher) throws ParseException, IOException {
+    private static void printResults(final String searchField, final String searchWords, IndexSearcher searcher) throws ParseException, IOException {
+        System.out.println("Search for words '"+searchWords+"' in field "+searchField);
         Query q = QueryHelper.generate(searchWords);
         TopScoreDocCollector collector = TopScoreDocCollector.create(10);
         searcher.search(q, collector);

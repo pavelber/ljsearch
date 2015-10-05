@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class LuceneBinding {
-    public static final Version CURRENT_LUCENE_VERSION =
-            Version.LUCENE_5_3_0;
 
     public static final String TITLE_FIELD = "title";
     public static final String CONTENT_FIELD = "content";

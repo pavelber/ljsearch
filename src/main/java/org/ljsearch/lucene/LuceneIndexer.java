@@ -11,18 +11,29 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.jsoup.Jsoup;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.file.Paths;
 
+@Service
+@PropertySource("classpath:ljsearch.properties")
 public class LuceneIndexer {
     private static final Logger logger = Logger.getLogger(LuceneIndexer.class.getName());
 
     /* IndexWriter is completely thread safe */
+   protected IndexWriter indexWriter;
 
-    private static IndexWriter indexWriter;
+    @Value("${index.dir}")
+    protected String indexDir;
 
-    public static void optimizeAndClose() {
+    @PreDestroy
+    public void optimizeAndClose() {
         try {
             synchronized (LuceneIndexer.class) {
                 if (null != indexWriter) {
@@ -37,22 +48,18 @@ public class LuceneIndexer {
         }
     }
 
-    public LuceneIndexer(String indexDir, final OpenMode create) throws IOException {
+    @PostConstruct
+    public void init() throws Exception {
         Directory dir = FSDirectory.open(Paths.get(indexDir));
         IndexWriterConfig config = new IndexWriterConfig(
                 LuceneBinding.getAnalyzer());
-        config.setOpenMode(create); // Rewrite old index
+        config.setOpenMode(OpenMode.CREATE_OR_APPEND); // Rewrite old index
         indexWriter = new IndexWriter(dir, config);
     }
 
     public void add(String title, String html, String journal, String poster) {
 
-        //String content = HtmlHelper.extractContent(html);
-        String content = html;
-        logger.info("***** " + title + " *****");
-        if (null != title)
-            logger.info(title);
-        logger.info(content);
+        String content =  Jsoup.parse(html).text();
 
         Document doc = new Document();
 
@@ -66,11 +73,15 @@ public class LuceneIndexer {
             synchronized (LuceneIndexer.class) {
                 if (null != indexWriter) {
                     indexWriter.addDocument(doc);
+                    indexWriter.commit();
                 }
             }
         } catch (IOException ex) {
             logger.error(ex);
+            throw new RuntimeException(ex);
         }
+
+
     }
 
     private void addField(final String text, final Document doc, final String titleField) {
@@ -94,5 +105,9 @@ public class LuceneIndexer {
                     text, Store.NO, Index.ANALYZED,
                     TermVector.WITH_POSITIONS_OFFSETS));
         }
+    }
+
+    public void setIndexDir(final String indexDir) {
+        this.indexDir = indexDir;
     }
 }

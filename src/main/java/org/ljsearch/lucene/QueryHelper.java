@@ -7,6 +7,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 
 public final class QueryHelper {
+
     public static Query generate(String story) throws ParseException {
         QueryParser parser = new MultiFieldQueryParser(
                 new String[]{
