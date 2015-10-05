@@ -1,5 +1,11 @@
 var app =  angular.module('app',[]);
 
+app.filter('trustAsHtml', function($sce) {
+    return function(html) {
+        return $sce.trustAsHtml(html);
+    };
+});
+
 app.controller('SearchCtrl', function($scope, $http) {
     $scope.url = '/search'; // The url of our search
 

@@ -1,7 +1,10 @@
 package org.ljsearch.lucene
 
+import groovy.transform.CompileStatic
+import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.*
+import org.apache.lucene.search.highlight.*
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.springframework.beans.factory.annotation.Value
@@ -15,6 +18,7 @@ import java.nio.file.Paths
  */
 @Service
 @PropertySource("classpath:ljsearch.properties")
+@CompileStatic
 class LuceneSearcher implements ISeacher {
 
     @Value('${index.dir}')
@@ -48,11 +52,16 @@ class LuceneSearcher implements ISeacher {
             for (int i = 0; i < hits.length; ++i) {
                 int docId = hits[i].doc;
                 Document d = searcher.doc(docId);
+
+                def content = d.get(LuceneBinding.CONTENT_FIELD)
+
                 results << new Post(
-                        title: d.get(LuceneBinding.TITLE_FIELD)?:"<no title>",
+                        title: d.get(LuceneBinding.TITLE_FIELD) ?: "<no title>",
                         journal: d.get(LuceneBinding.JOURNAL_FIELD),
                         poster: d.get(LuceneBinding.POSTER_FIELD),
-                        url: d.get(LuceneBinding.URL_FIELD)
+                        url: d.get(LuceneBinding.URL_FIELD),
+                        date: d.get(LuceneBinding.DATE_FIELD),
+                        text: getHighlightedField(q, LuceneBinding.analyzer, LuceneBinding.CONTENT_FIELD, content)
                         // todo: citation
                 )
             }
@@ -63,5 +72,13 @@ class LuceneSearcher implements ISeacher {
         return results
     }
 
+    private String getHighlightedField(Query query, Analyzer analyzer, String fieldName, String fieldValue) throws IOException, InvalidTokenOffsetsException {
+        Formatter formatter = new SimpleHTMLFormatter("<mark>", "</mark>");
+        QueryScorer queryScorer = new QueryScorer(query);
+        Highlighter highlighter = new Highlighter(formatter, queryScorer);
+        highlighter.setTextFragmenter(new SimpleSpanFragmenter(queryScorer, 100));
+        highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
+        return highlighter.getBestFragment(analyzer, fieldName, fieldValue);
+    }
 
 }
