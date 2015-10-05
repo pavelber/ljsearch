@@ -15,14 +15,15 @@ import org.ljsearch.lucene.QueryHelper;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Date;
 
 public class Test3 {
     public static void main(String[] args) throws Exception {
         LuceneIndexer indexer = new LuceneIndexer();
         indexer.setIndexDir("D:\\temp");
         indexer.init();
-        indexer.add("titte заголовок","мы включили apache","potrebitel_il","javax_slr");
-        indexer.add("сады","мы гуляли в саду","tourism_il","elcy_");
+        indexer.add("titte заголовок","мы включили apache","potrebitel_il","javax_slr","http://1", new Date());
+        indexer.add("сады","мы гуляли в саду","tourism_il","elcy_","http://1", new Date());
       //  indexer.optimizeAndClose();
         IndexReader reader =  DirectoryReader.open(FSDirectory.open(Paths.get("D:\\temp")));
         IndexSearcher searcher = new IndexSearcher(reader);

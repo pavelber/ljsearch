@@ -16,6 +16,8 @@ public final class LuceneBinding {
     public static final String CONTENT_FIELD = "content";
     public static final String JOURNAL_FIELD = "journal";
     public static final String POSTER_FIELD = "poster";
+    public static final String URL_FIELD = "url";
+    public static final String DATE_FIELD = "date";
 
     /* Russian */
 
