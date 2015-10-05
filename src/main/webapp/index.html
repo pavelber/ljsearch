@@ -13,11 +13,12 @@
         <label>Search:</label>
         <input type="text" ng-model="keywords" class="input-medium search-query" placeholder="Keywords...">
         <button type="submit" class="btn" ng-click="search()">Search</button>
-        <p class="help-block">Try for example: "php" or "angularjs" or "asdfg"</p>
     </form>
-<pre ng-model="result">
-{{result}}
-</pre>
+    <table>
+       <tr ng-repeat="post in result">
+            <td><a href="{{post.url}}">{{post.title}}</a> by {{post.poster}}</td>
+        </tr>
+    </table>
 </div>
 </body>
 
