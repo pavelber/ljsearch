@@ -48,7 +48,8 @@ class LuceneSearcher implements ISeacher {
             for (int i = 0; i < hits.length; ++i) {
                 int docId = hits[i].doc;
                 Document d = searcher.doc(docId);
-                results << new Post(title: d.get(LuceneBinding.TITLE_FIELD),
+                results << new Post(
+                        title: d.get(LuceneBinding.TITLE_FIELD)?:"<no title>",
                         journal: d.get(LuceneBinding.JOURNAL_FIELD),
                         poster: d.get(LuceneBinding.POSTER_FIELD),
                         url: d.get(LuceneBinding.URL_FIELD)
