@@ -36,7 +36,7 @@ public class Test1 {
         XMLRPCClient ljClient = new XMLRPCClientImpl();
         GetEventsArgument argument = new GetEventsArgument();
         argument.setUsername("javax_slr");
-        argument.setHpassword("URAFesA47p");
+        argument.setHpassword("");
         argument.setSelecttype(GetEventsArgument.Type.LASTN);
         argument.setHowmany(10);
         argument.setUsejournal("tourism_il");
