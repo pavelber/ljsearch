@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 
 import java.util.Arrays;
 
+import org.junit.Ignore;
 import org.ljsearch.katkov.lj.xmlrpc.arguments.*;
 import org.ljsearch.katkov.lj.xmlrpc.results.*;
 
@@ -11,6 +12,7 @@ import org.ljsearch.katkov.lj.xmlrpc.results.*;
  * That class is not real UnitTest calss as there are no assert statemnet
  * It mere serves as a test client
  */
+@Ignore
 public class XMLRPCClientImplTest extends TestCase {
     XMLRPCClient ljClient;
     private static final String LOGIN = "ljapi";

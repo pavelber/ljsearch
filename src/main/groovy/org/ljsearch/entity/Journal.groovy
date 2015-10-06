@@ -2,6 +2,8 @@ package org.ljsearch.entity
 
 import javax.persistence.Entity
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 /**
@@ -12,7 +14,8 @@ import javax.persistence.Table
 class Journal {
     @Id
     String journal;
-    String username;
-    String password;
-    Date lastIndexed;
+    @ManyToOne
+    @JoinColumn(name="user")
+    LJUser user;
+    Date last;
 }

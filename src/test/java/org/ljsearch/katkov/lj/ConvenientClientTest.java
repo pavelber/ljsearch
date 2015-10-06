@@ -2,12 +2,14 @@ package org.ljsearch.katkov.lj;
 
 
 import junit.framework.TestCase;
+import org.junit.Ignore;
 import org.ljsearch.katkov.lj.comments.Comment;
 import org.ljsearch.katkov.lj.xmlrpc.results.BlogEntry;
 
 import java.util.Calendar;
 import java.util.Date;
 
+@Ignore
 public class ConvenientClientTest extends TestCase {
     ConvenientClient ljConvenientClient;
     private static final String LOGIN = "ljapi";

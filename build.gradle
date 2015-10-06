@@ -51,6 +51,9 @@ dependencies {
     compile 'org.webjars:bootstrap:3.3.5'
     compile 'org.webjars:momentjs:2.10.6'
 
+    compile 'org.liquibase:liquibase-core:3.4.1'
+
+
 
     testCompile 'org.springframework:spring-test'
     testCompile group: 'junit', name: 'junit', version: '4.11'

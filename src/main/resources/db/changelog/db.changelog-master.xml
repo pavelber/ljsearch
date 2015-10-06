@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+    <changeSet id="initial changeset" author="Pavel">
+        <createTable tableName="users">
+            <column name="username" type="varchar(63)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="password" type="varchar(63)"/>
+        </createTable>
+        <createTable tableName="journals">
+            <column name="journal" type="varchar(63)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user" type="varchar(63)">
+                <constraints nullable="false" foreignKeyName="user_name" references="users(username)"/>
+            </column>
+            <column name="last" type="timestamp"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
