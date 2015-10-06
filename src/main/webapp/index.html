@@ -3,7 +3,9 @@
 <head>
     <title>Search form with AngualrJS</title>
     <link rel="stylesheet" href="/webjars/bootstrap/3.3.5/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="index.css" type="text/css" />
     <script src="/webjars/angularjs/1.4.6/angular.min.js"></script>
+    <script src="/webjars/momentjs/2.10.6/moment.js"></script>
     <script src="index.js"></script>
 
 <body ng-app="app">
@@ -16,7 +18,7 @@
     </form>
     <table>
        <tr ng-repeat="post in result">
-            <td><a href="{{post.url}}">{{post.title}}</a> by {{post.poster}}
+            <td><a href="{{post.url}}">{{post.title}}</a> by <img src="ljuser.jpg"/><A href="http://{{post.poster}}.livejournal.com/">{{post.poster}}</A> from {{post.formateddate}}
                 <div ng-bind-html="post.text|trustAsHtml"></div>
             </td>
 

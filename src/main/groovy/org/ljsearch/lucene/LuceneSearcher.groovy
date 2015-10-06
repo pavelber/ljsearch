@@ -2,6 +2,7 @@ package org.ljsearch.lucene
 
 import groovy.transform.CompileStatic
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.document.DateTools
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.*
 import org.apache.lucene.search.highlight.*
@@ -60,7 +61,7 @@ class LuceneSearcher implements ISeacher {
                         journal: d.get(LuceneBinding.JOURNAL_FIELD),
                         poster: d.get(LuceneBinding.POSTER_FIELD),
                         url: d.get(LuceneBinding.URL_FIELD),
-                        date: d.get(LuceneBinding.DATE_FIELD),
+                        date: DateTools.stringToDate(d.get(LuceneBinding.DATE_FIELD)).time,
                         text: getHighlightedField(q, LuceneBinding.analyzer, LuceneBinding.CONTENT_FIELD, content)
                         // todo: citation
                 )

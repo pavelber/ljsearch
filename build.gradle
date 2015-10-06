@@ -47,6 +47,8 @@ dependencies {
 
     compile 'org.webjars:angularjs:1.4.6'
     compile 'org.webjars:bootstrap:3.3.5'
+    compile 'org.webjars:momentjs:2.10.6'
+
 
     testCompile 'org.springframework:spring-test'
     testCompile group: 'junit', name: 'junit', version: '4.11'

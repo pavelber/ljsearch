@@ -20,6 +20,11 @@ app.controller('SearchCtrl', function($scope, $http) {
                 $scope.status = status;
                 $scope.data = data;
                 $scope.result = data; // Show result from server in our <pre></pre> element
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].date != null) {
+                        data[i].formateddate = moment(data[i].date).format("MMMM Do YYYY");
+                    }
+                }
             })
             .
             error(function(data, status) {

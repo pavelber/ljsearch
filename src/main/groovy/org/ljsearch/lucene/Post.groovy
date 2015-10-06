@@ -6,6 +6,6 @@ class Post {
     String poster
     String url
     String text
-    String date
+    long date
 
 }
