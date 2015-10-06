@@ -8,6 +8,8 @@ app.filter('trustAsHtml', function($sce) {
 
 app.controller('SearchCtrl', function($scope, $http) {
     $scope.url = '/search'; // The url of our search
+    $scope.poster = '';
+    $scope.journal = '';
 
     // The function that will be executed on button click (ng-click="search()")
     $scope.search = function() {
@@ -15,7 +17,7 @@ app.controller('SearchCtrl', function($scope, $http) {
         // Create the http post request
         // the data holds the keywords
         // The request is a JSON request.
-        $http.get($scope.url+"?journal=tourism_il&term="+$scope.keywords).
+        $http.get($scope.url+"?journal="+$scope.journal+"&term="+$scope.keywords+"&poster="+$scope.poster).
             success(function(data, status) {
                 $scope.status = status;
                 $scope.data = data;

@@ -46,7 +46,7 @@ class LuceneSearcher implements ISeacher {
         def searcher = mgr.acquire()
         def results = []
         try {
-            Query q = QueryHelper.generate(text); //todo: use journal and poster  and date
+            Query q = QueryHelper.generate(text,journal,poster);
             TopScoreDocCollector collector = TopScoreDocCollector.create(100);//TOdo 100
             searcher.search(q, collector);
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
