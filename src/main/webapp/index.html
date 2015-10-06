@@ -11,6 +11,16 @@
 <body ng-app="app">
 
 <div ng-controller="SearchCtrl">
+
+    <table class="table table-condensed">
+        <tr><th>Journal</th><th>Last Synced Post Date</th></tr>
+        <tr ng-repeat="journal in journals">
+            <td>{{journal.journal}}</td>
+            <td>{{journal.formateddate}}</td>
+
+        </tr>
+    </table>
+
     <form class="well form-search">
         <label>Search:</label>
         <input type="text" ng-model="keywords" class="input-medium search-query" placeholder="Keywords...">
@@ -20,6 +30,14 @@
         by poster <input type="text" ng-model="poster" class="input-small search-query" placeholder="Poster">
         <button type="submit" class="btn" ng-click="search()">Search</button>
     </form>
+
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+        <input type="hidden" name="cmd" value="_s-xclick">
+        <input type="hidden" name="hosted_button_id" value="PDJ3MD7N62AXE">
+        <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+        <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+    </form>
+
     <table>
        <tr ng-repeat="post in result">
             <td><a href="{{post.url}}">{{post.title}}</a> by <img src="ljuser.jpg"/><A href="http://{{post.poster}}.livejournal.com/">{{post.poster}}</A> from {{post.formateddate}}
