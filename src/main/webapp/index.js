@@ -19,6 +19,7 @@ app.controller('SearchCtrl', function ($scope, $http) {
                 if (data[i].last != null) {
                     data[i].formateddate = moment(data[i].last).format("MMMM Do YYYY");
                 }
+                data[i].id = data[i].journal
             }
         })
         .
