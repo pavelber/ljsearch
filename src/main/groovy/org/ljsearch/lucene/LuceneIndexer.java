@@ -7,11 +7,13 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
+import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -67,9 +69,11 @@ public class LuceneIndexer implements IIndexer {
 
         Document doc = new Document();
 
-        doc.add(new Field("date",
-                DateTools.timeToString(date.getTime(), DateTools.Resolution.MINUTE),
+        String value = DateTools.timeToString(date.getTime(), DateTools.Resolution.MINUTE);
+        doc.add(new Field(LuceneBinding.DATE_FIELD,
+                value,
                 Field.Store.YES, Field.Index.NOT_ANALYZED));
+        doc.add(new SortedDocValuesField(LuceneBinding.DATE_FIELD, new BytesRef(value)));
         addField(url, doc, LuceneBinding.URL_FIELD);
         addField(journal, doc, LuceneBinding.JOURNAL_FIELD);
         addField(poster, doc, LuceneBinding.POSTER_FIELD);

@@ -26,7 +26,7 @@ import java.time.temporal.ChronoUnit
 class Downloading implements IDownloading {
 
     private static Logger logger = LoggerFactory.getLogger(Downloading.class)
-    private static final LocalDate START_DATE = LocalDate.of(2000, 7, 1)
+    private static final LocalDate START_DATE = LocalDate.of(2001, 1, 1)
 
 
     @Autowired

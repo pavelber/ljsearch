@@ -47,7 +47,10 @@ class LuceneSearcher implements ISeacher {
         def results = []
         try {
             Query q = QueryHelper.generate(text,journal,poster);
-            TopScoreDocCollector collector = TopScoreDocCollector.create(100);//TOdo 100
+            SortField startField = new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true);
+
+            Sort sort = new Sort(startField);
+            Collector collector = TopFieldCollector.create(sort,400,true, false, false);//TOdo 100
             searcher.search(q, collector);
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
             for (int i = 0; i < hits.length; ++i) {
