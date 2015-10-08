@@ -28,6 +28,18 @@ app.controller('SearchCtrl', function ($scope, $http) {
             $scope.jorunalsstatus = status;
         });
 
+    $http.get("/news").
+        success(function (data, status) {
+            $scope.newsstatus = status;
+            $scope.messages = data;
+
+        })
+        .
+        error(function (data, status) {
+            $scope.messages = data || "Request failed";
+            $scope.newsstatus = status;
+        });
+
     // The function that will be executed on button click (ng-click="search()")
     $scope.search = function () {
 

@@ -22,4 +22,11 @@
             <column name="last" type="timestamp"/>
         </createTable>
     </changeSet>
+    <changeSet id="news" author="Pavel">
+        <createTable tableName="news">
+            <column name="message" type="varchar(127)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
