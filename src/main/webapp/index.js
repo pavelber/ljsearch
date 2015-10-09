@@ -10,6 +10,8 @@ app.controller('SearchCtrl', function ($scope, $http) {
     $scope.url = '/search'; // The url of our search
     $scope.poster = '';
     $scope.journal = '';
+    $scope.year = '';
+    $scope.keywords = '';
 
     $http.get("/journals").
         success(function (data, status) {
@@ -39,14 +41,25 @@ app.controller('SearchCtrl', function ($scope, $http) {
             $scope.messages = data || "Request failed";
             $scope.newsstatus = status;
         });
+    $http.get("/years").
+        success(function (data, status) {
+            $scope.yearsstatus = status;
+            $scope.years = data;
+
+        })
+        .
+        error(function (data, status) {
+            $scope.years = data || "Request failed";
+            $scope.yearsstatus = status;
+        });
 
     // The function that will be executed on button click (ng-click="search()")
     $scope.search = function () {
-
+        $scope.data = []
         // Create the http post request
         // the data holds the keywords
         // The request is a JSON request.
-        $http.get($scope.url + "?journal=" + $scope.journal + "&term=" + $scope.keywords + "&poster=" + $scope.poster).
+        $http.get($scope.url + "?journal=" + $scope.journal + "&term=" + $scope.keywords + "&poster=" + $scope.poster+"&year="+$scope.year).
             success(function (data, status) {
                 $scope.status = status;
                 $scope.data = data;

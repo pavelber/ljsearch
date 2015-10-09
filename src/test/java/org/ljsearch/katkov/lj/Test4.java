@@ -8,44 +8,58 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopScoreDocCollector;
-import org.apache.lucene.store.FSDirectory;
-import org.ljsearch.lucene.LuceneBinding;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.RAMDirectory;
 import org.ljsearch.lucene.LuceneIndexer;
 import org.ljsearch.lucene.QueryHelper;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Date;
 
 public class Test4 {
     public static void main(String[] args) throws Exception {
+        Directory index = new RAMDirectory();
         LuceneIndexer indexer = new LuceneIndexer();
-        indexer.setIndexDir("D:\\temp");
-        indexer.init();
-        indexer.add("titte заголовок","мы включили apache","potrebitel_il","javax_slr","http://1", new Date());
-        indexer.add("сады","мы гуляли в саду","tourism_il","elcy_","http://1", new Date());
-      //  indexer.optimizeAndClose();
-        IndexReader reader =  DirectoryReader.open(FSDirectory.open(Paths.get("D:\\temp")));
-        IndexSearcher searcher = new IndexSearcher(reader);
+        //indexer.setIndexDir("D:\\temp\\l1");
+        indexer.init(index);
+        indexer.add("titte заголовок", "мы включили apache", "potrebitel_il", "javax_slr", "http://1", new Date(2010, 11, 1));
+        indexer.add("сады", "мы гуляли в саду", "tourism_il", "elcy_", "http://1", new Date(2015, 10, 8));
+        indexer.optimizeAndClose();
 
-        printResults(LuceneBinding.TITLE_FIELD, "сад",searcher);
-        printResults(LuceneBinding.RUS_TITLE_FIELD, "сад",searcher);
-        printResults(LuceneBinding.CONTENT_FIELD, "мы",searcher);
-        printResults(LuceneBinding.CONTENT_FIELD, "сад",searcher);
-        printResults(LuceneBinding.RUS_CONTENT_FIELD, "сад",searcher);
-        printResults(LuceneBinding.CONTENT_FIELD, "apaches",searcher);
-        printResults(LuceneBinding.ENG_CONTENT_FIELD, "apaches",searcher);
+        IndexReader reader = DirectoryReader.open(index);
+        IndexSearcher searcher = new IndexSearcher(reader);
+         printResults("сад",null, "potrebitel_il",searcher,null,null);
+         printResults( "мы",null,"potrebitel_il",searcher,null,null);
+        printResults( "сад",null,"tourism_il",searcher,null,null);
+        printResults("мы", null, null,searcher,
+                new Date(2010, 1, 1),
+                new Date(2061, 1, 1)
+        );
+
+        printResults(null, null, "elcy_",searcher,
+                new Date(2010, 1, 1),
+                new Date(2061, 1, 1)
+        );
+
+        /*printResults("мы", null, null,searcher,
+                new Date(2010, 1, 1), null
+        );
+        printResults("мы", null, null,searcher,
+                null,
+                new Date(2010, 12, 1)
+        );*/
 
     }
 
-    private static void printResults(final String searchField, final String searchWords, IndexSearcher searcher) throws ParseException, IOException {
-        System.out.println("Search for words '"+searchWords+"' in field "+searchField);
-        Query q = QueryHelper.generate(searchWords);
+    private static void printResults(final String searchWords, String journal, String poster, IndexSearcher searcher, Date datefrom, Date dateto) throws ParseException, IOException {
+        System.out.println("Search for words '" + searchWords + "' in journal " + journal);
+        Query q = QueryHelper.generate(searchWords, journal, poster, datefrom, dateto);
         TopScoreDocCollector collector = TopScoreDocCollector.create(10);
+
         searcher.search(q, collector);
         ScoreDoc[] hits = collector.topDocs().scoreDocs;
         System.out.println("Found " + hits.length + " hits.");
-        for(int i=0;i<hits.length;++i) {
+        for (int i = 0; i < hits.length; ++i) {
             int docId = hits[i].doc;
             Document d = searcher.doc(docId);
             System.out.println((i + 1) + ". " + d.get("title"));

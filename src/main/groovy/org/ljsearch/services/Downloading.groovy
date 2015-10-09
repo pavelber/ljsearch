@@ -27,6 +27,7 @@ class Downloading implements IDownloading {
 
     private static Logger logger = LoggerFactory.getLogger(Downloading.class)
     private static final LocalDate START_DATE = LocalDate.of(2001, 1, 1)
+    public static final int DELAY = 20 * 60 * 1000
 
 
     @Autowired
@@ -60,7 +61,7 @@ class Downloading implements IDownloading {
                 repo.save(journal)
             } catch (LJRuntimeException e) {
                 logger.info("Got {}, going to sleep...", e.getCause().toString())
-                Thread.sleep(10 * 60 * 1000)//TODO  constant
+                Thread.sleep(DELAY)
             }
 
         }

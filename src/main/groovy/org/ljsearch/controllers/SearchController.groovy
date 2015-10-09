@@ -1,8 +1,7 @@
 package org.ljsearch.controllers
 
 import groovy.json.JsonBuilder
-import org.ljsearch.lucene.ISeacher
-import org.ljsearch.lucene.Post
+import org.ljsearch.lucene.ISearcher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
@@ -16,16 +15,23 @@ import org.springframework.web.bind.annotation.ResponseBody
 class SearchController {
 
     @Autowired
-    protected ISeacher seacher
+    protected ISearcher seacher
 
 
     @RequestMapping("/search")
-    @ResponseBody String search(
+    @ResponseBody
+    String search(
             @RequestParam("term") String term,
             @RequestParam(value = "journal", required = false) String journal,
-            @RequestParam(value = "poster", required = false) String poster
-    ){
-        def results = seacher.search(journal, poster, term)
-        return new JsonBuilder( results).toPrettyString()
+            @RequestParam(value = "poster", required = false) String poster,
+            @RequestParam(value = "year", required = false) Integer year
+    ) {
+        Date from, to;
+        if (year != null) {
+            from = new GregorianCalendar(year, Calendar.JANUARY, 1).time
+            to = new GregorianCalendar(year + 1, Calendar.JANUARY, 1).time
+        }
+        def results = seacher.search(journal, poster, term,from, to)
+        return new JsonBuilder(results).toPrettyString()
     }
 }

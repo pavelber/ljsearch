@@ -31,7 +31,7 @@ public class LuceneIndexer implements IIndexer {
     private static final Logger logger = Logger.getLogger(LuceneIndexer.class.getName());
 
     /* IndexWriter is completely thread safe */
-   protected IndexWriter indexWriter;
+    protected IndexWriter indexWriter;
 
     @Value("${index.dir}")
     protected String indexDir;
@@ -56,6 +56,10 @@ public class LuceneIndexer implements IIndexer {
     @PostConstruct
     public void init() throws Exception {
         Directory dir = FSDirectory.open(Paths.get(indexDir));
+        init(dir);
+    }
+
+    public void init(Directory dir) throws IOException {
         IndexWriterConfig config = new IndexWriterConfig(
                 LuceneBinding.getAnalyzer());
         config.setOpenMode(OpenMode.CREATE_OR_APPEND); // Rewrite old index
@@ -65,11 +69,11 @@ public class LuceneIndexer implements IIndexer {
     @Override
     public void add(String title, String html, String journal, String poster, String url, final Date date) {
 
-        String content =  Jsoup.parse(html).text();
+        String content = Jsoup.parse(html).text();
 
         Document doc = new Document();
 
-        String value = DateTools.timeToString(date.getTime(), DateTools.Resolution.MINUTE);
+        String value = DateHelper.toString(date);
         doc.add(new Field(LuceneBinding.DATE_FIELD,
                 value,
                 Field.Store.YES, Field.Index.NOT_ANALYZED));

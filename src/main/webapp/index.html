@@ -14,7 +14,7 @@
 
 <div ng-controller="SearchCtrl">
 
-    <table class="table table-condensed table-striped">
+   <!-- <table class="table table-condensed table-striped">
         <tr>
             <th>News</th>
 
@@ -23,7 +23,7 @@
             <td>{{message.message}}</td>
 
         </tr>
-    </table>
+    </table>-->
 
     <form class="well form-horizontal" role="form">
         <div class="form-group">
@@ -38,12 +38,20 @@
         <div class="form-group">
             <label class="control-label  col-sm-1">in journal </label>
 
-            <div class="controls  col-sm-1"><select id="sel" class="form-control input-block-level" ng-model="journal"
+            <div class="controls  col-sm-2"><select id="sel" class="form-control input-block-level" ng-model="journal"
                                                     ng-options="obj.id as obj.journal for obj in journals">
                 <option value=""></option>
-
             </select>
+            </div>
+        </div>
 
+         <div class="form-group">
+            <label class="control-label  col-sm-1">year </label>
+
+            <div class="controls  col-sm-1"><select id="sel" class="form-control input-block-level" ng-model="year"
+                                                    ng-options="obj for obj in years">
+                <option value=""></option>
+            </select>
             </div>
         </div>
 
@@ -52,7 +60,6 @@
 
             <div class="controls  col-sm-1">
                 <input type="text" ng-model="poster" class="form-control input-small search-query" placeholder="Poster">
-
             </div>
         </div>
         <div class="form-group">
@@ -64,6 +71,7 @@
     <form action="https://www.paypal.com/cgi-bin/webscr" method="post" class="form-horizontal" target="_top">
         <div class="form-group">
             <label class="control-label  col-sm-2">Donate to support the project: </label>
+
             <div class="controls  col-sm-1">
                 <input type="hidden" name="cmd" value="_s-xclick">
                 <input type="hidden" name="hosted_button_id" value="PDJ3MD7N62AXE">

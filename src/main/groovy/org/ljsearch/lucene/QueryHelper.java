@@ -6,12 +6,10 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.codehaus.groovy.util.StringUtil;
+import org.apache.lucene.search.*;
+import org.apache.lucene.util.BytesRef;
+
+import java.util.Date;
 
 public final class QueryHelper {
 
@@ -36,21 +34,34 @@ public final class QueryHelper {
     }
 
     public static Query generate(String words, String journal, String poster) throws ParseException {
-        Query content = generate(words);
-        if (StringUtils.isEmpty(journal)&&StringUtils.isEmpty(poster)){
-            return content;
+        return generate(words, journal, poster, null, null);
+    }
+
+    public static Query generate(String words, String journal, String poster, Date dateFrom, Date dateTo) throws ParseException {
+
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();;
+        if (!StringUtils.isEmpty(words)) {
+            Query qf = generate(words);
+            builder = builder.add(qf, BooleanClause.Occur.MUST);
         }
 
-        BooleanQuery.Builder builder = new BooleanQuery.Builder().add(content, BooleanClause.Occur.MUST);
-        if (!StringUtils.isEmpty(journal)){
-           Query qf = new TermQuery(new Term(LuceneBinding.JOURNAL_FIELD, journal));
+        if (!StringUtils.isEmpty(journal)) {
+            Query qf = new TermQuery(new Term(LuceneBinding.JOURNAL_FIELD, journal));
             builder = builder.add(qf, BooleanClause.Occur.MUST);
         }
 
 
-        if (!StringUtils.isEmpty(poster)){
+        if (!StringUtils.isEmpty(poster)) {
             Query qp = new TermQuery(new Term(LuceneBinding.POSTER_FIELD, poster));
             builder = builder.add(qp, BooleanClause.Occur.MUST);
+        }
+
+        if (dateFrom != null || dateTo != null) {
+            TermRangeQuery dateQuery = new TermRangeQuery(LuceneBinding.DATE_FIELD,
+                    dateFrom == null ? null : new BytesRef(DateHelper.toString(dateFrom)),
+                    dateTo == null ? null : new BytesRef(DateHelper.toString(dateTo)), true, false);
+            builder = builder.add(dateQuery, BooleanClause.Occur.MUST);
         }
 
 

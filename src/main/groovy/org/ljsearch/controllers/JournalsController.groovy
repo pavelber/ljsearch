@@ -2,10 +2,7 @@ package org.ljsearch.controllers
 
 import groovy.json.JsonBuilder
 import org.ljsearch.entity.IJournalRepository
-import org.ljsearch.entity.INewsRepository
-import org.ljsearch.services.Downloading
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
@@ -17,12 +14,13 @@ import org.springframework.web.bind.annotation.ResponseBody
 class JournalsController {
 
     @Autowired
-    INewsRepository repo
+    IJournalRepository repo
 
 
-    @RequestMapping("/news")
+    @RequestMapping("/journals")
     @ResponseBody String get() {
-        def news = repo.findAll()
-         return   new JsonBuilder( news).toPrettyString()
+        def journals = repo.findAll()
+        journals.each {it.user = null}
+        return   new JsonBuilder( journals).toPrettyString()
     }
 }
