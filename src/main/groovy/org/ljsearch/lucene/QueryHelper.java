@@ -39,7 +39,6 @@ public final class QueryHelper {
 
     public static Query generate(String words, String journal, String poster, Date dateFrom, Date dateTo) throws ParseException {
 
-
         BooleanQuery.Builder builder = new BooleanQuery.Builder();;
         if (!StringUtils.isEmpty(words)) {
             Query qf = generate(words);

@@ -51,7 +51,7 @@ class LuceneSearcher implements ISearcher {
         def searcher = mgr.acquire()
         def results = []
         if (!StringUtils.isEmpty(journal) ||
-                !StringUtils.isEmpty(journal) ||
+                !StringUtils.isEmpty(poster) ||
                 !StringUtils.isEmpty(text) ||
                 from != null || to != null
         ) {
