@@ -23,6 +23,7 @@ import java.nio.file.Paths
 @CompileStatic
 class LuceneSearcher implements ISearcher {
 
+    public static final int MAX_LENGTH_FIRST_LINE = 100
     @Value('${index.dir}')
     protected String indexDir
 
@@ -69,13 +70,15 @@ class LuceneSearcher implements ISearcher {
 
                     def content = d.get(LuceneBinding.CONTENT_FIELD)
 
+
+                    String citation = createCitation(q, content)
                     results << new Post(
                             title: d.get(LuceneBinding.TITLE_FIELD) ?: "<no title>",
                             journal: d.get(LuceneBinding.JOURNAL_FIELD),
                             poster: d.get(LuceneBinding.POSTER_FIELD),
                             url: d.get(LuceneBinding.URL_FIELD),
                             date: DateTools.stringToDate(d.get(LuceneBinding.DATE_FIELD)).time,
-                            text: getHighlightedField(q, LuceneBinding.analyzer, LuceneBinding.CONTENT_FIELD, content)
+                            text: citation
                     )
                 }
             } finally {
@@ -83,6 +86,18 @@ class LuceneSearcher implements ISearcher {
             }
         }
         return results
+    }
+
+    private createCitation(Query q, String content) {
+        String citation
+        def highlited = getHighlightedField(q, LuceneBinding.analyzer, LuceneBinding.CONTENT_FIELD, content)
+        if (highlited != null) {
+            citation = highlited
+        } else {
+            def line = content.split("\n")[0]
+            citation = ((line.length()> MAX_LENGTH_FIRST_LINE)?line.substring(0,MAX_LENGTH_FIRST_LINE):line) + " ... "
+        }
+        return citation
     }
 
     private String getHighlightedField(Query query, Analyzer analyzer, String fieldName, String fieldValue) throws IOException, InvalidTokenOffsetsException {
