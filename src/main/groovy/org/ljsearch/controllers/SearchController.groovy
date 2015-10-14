@@ -26,8 +26,8 @@ class SearchController {
             @RequestParam(value = "poster", required = false) String poster,
             @RequestParam(value = "year", required = false) String yearStr
     ) {
-        journal = (journal == 'null')?"":journal
-        Integer year =  (yearStr == 'null' || yearStr == "" || yearStr == null)?null:Integer.parseInt(yearStr)
+        journal = (journal == 'null' || journal == 'undefined' )?"":journal
+        Integer year =  (yearStr == 'null' || yearStr == "" || yearStr == null || yearStr == 'undefined')?null:Integer.parseInt(yearStr)
         Date from, to;
         if (year != null) {
             from = new GregorianCalendar(year, Calendar.JANUARY, 1).time
