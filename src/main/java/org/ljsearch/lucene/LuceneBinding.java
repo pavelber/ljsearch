@@ -19,6 +19,9 @@ public final class LuceneBinding {
     public static final String URL_FIELD = "url";
     public static final String DATE_FIELD = "date";
 
+
+    public static final String TYPE_FIELD = "contenttype";
+
     /* Russian */
 
     public static final String RUS_TITLE_FIELD = "rustitle";
@@ -28,6 +31,8 @@ public final class LuceneBinding {
 
     public static final String ENG_TITLE_FIELD = "engtitle";
     public static final String ENG_CONTENT_FIELD = "engcontent";
+
+
 
     public static Analyzer getAnalyzer() {
 

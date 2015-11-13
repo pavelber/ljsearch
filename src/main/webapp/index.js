@@ -12,6 +12,7 @@ app.controller('SearchCtrl', function ($scope, $http) {
     $scope.journal = '';
     $scope.year = '';
     $scope.keywords = '';
+    $scope.type = '';
 
     $http.get("/journals").
         success(function (data, status) {
@@ -59,7 +60,7 @@ app.controller('SearchCtrl', function ($scope, $http) {
         // Create the http post request
         // the data holds the keywords
         // The request is a JSON request.
-        $http.get($scope.url + "?journal=" + $scope.journal + "&term=" + $scope.keywords + "&poster=" + $scope.poster+"&year="+$scope.year).
+        $http.get($scope.url + "?journal=" + $scope.journal + "&term=" + $scope.keywords + "&poster=" + $scope.poster + "&type=" + $scope.type+"&year="+$scope.year).
             success(function (data, status) {
                 $scope.status = status;
                 $scope.data = data;

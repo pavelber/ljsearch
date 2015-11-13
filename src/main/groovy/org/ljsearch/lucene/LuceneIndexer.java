@@ -1,7 +1,6 @@
 package org.ljsearch.lucene;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -15,6 +14,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.jsoup.Jsoup;
+import org.ljsearch.IndexedType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
@@ -64,10 +64,11 @@ public class LuceneIndexer implements IIndexer {
                 LuceneBinding.getAnalyzer());
         config.setOpenMode(OpenMode.CREATE_OR_APPEND); // Rewrite old index
         indexWriter = new IndexWriter(dir, config);
+
     }
 
     @Override
-    public void add(String title, String html, String journal, String poster, String url, final Date date) {
+    public void add(String title, String html, String journal, String poster, String url, final Date date, IndexedType type) {
 
         String content = Jsoup.parse(html).text();
 
@@ -80,6 +81,7 @@ public class LuceneIndexer implements IIndexer {
         doc.add(new SortedDocValuesField(LuceneBinding.DATE_FIELD, new BytesRef(value)));
         addField(url, doc, LuceneBinding.URL_FIELD);
         addField(journal, doc, LuceneBinding.JOURNAL_FIELD);
+        addField(type.name(), doc, LuceneBinding.TYPE_FIELD);
         addField(poster, doc, LuceneBinding.POSTER_FIELD);
         addTextField(title, doc, LuceneBinding.TITLE_FIELD, LuceneBinding.RUS_TITLE_FIELD, LuceneBinding.ENG_TITLE_FIELD);
         addTextField(content, doc, LuceneBinding.CONTENT_FIELD, LuceneBinding.RUS_TITLE_FIELD, LuceneBinding.ENG_CONTENT_FIELD);

@@ -1,4 +1,6 @@
-package org.ljsearch.lucene;
+package org.ljsearch.lucene
+
+import org.ljsearch.IndexedType;
 
 class Post {
     String title
@@ -6,6 +8,7 @@ class Post {
     String poster
     String url
     String text
+    IndexedType type
     long date
 
 }

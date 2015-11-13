@@ -5,10 +5,12 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.DateTools
 import org.apache.lucene.document.Document
+import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search.*
 import org.apache.lucene.search.highlight.*
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
+import org.ljsearch.IndexedType
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.PropertySource
 import org.springframework.stereotype.Service
@@ -40,7 +42,7 @@ class LuceneSearcher implements ISearcher {
     }
 
     @Override
-    List<Post> search(String journal, String poster, String text, Date from, Date to) {
+    List<Post> search(String journal, String poster, String text, Date from, Date to, IndexedType type) {
 
         synchronized (this) {//todo bad
             if (mgr == null) {
@@ -54,14 +56,17 @@ class LuceneSearcher implements ISearcher {
         if (!StringUtils.isEmpty(journal) ||
                 !StringUtils.isEmpty(poster) ||
                 !StringUtils.isEmpty(text) ||
+                type!=null ||
                 from != null || to != null
         ) {
             try {
-                Query q = QueryHelper.generate(text, journal, poster, from, to);
+                Query q = QueryHelper.generate(text, journal, poster, from, to, type);
                 SortField startField = new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true);
 
                 Sort sort = new Sort(startField);
                 Collector collector = TopFieldCollector.create(sort, 400, true, false, false);
+             //   searcher.search(q, collector);
+                def q1 = new QueryParser("content", LuceneBinding.getAnalyzer()).parse("+contenttype:Post")
                 searcher.search(q, collector);
                 ScoreDoc[] hits = collector.topDocs().scoreDocs;
                 for (int i = 0; i < hits.length; ++i) {
@@ -78,7 +83,8 @@ class LuceneSearcher implements ISearcher {
                             poster: d.get(LuceneBinding.POSTER_FIELD),
                             url: d.get(LuceneBinding.URL_FIELD),
                             date: DateTools.stringToDate(d.get(LuceneBinding.DATE_FIELD)).time,
-                            text: citation
+                            text: citation,
+                        //    type: IndexedType.valueOf(d.get(LuceneBinding.TYPE_FIELD))
                     )
                 }
             } finally {
@@ -95,7 +101,7 @@ class LuceneSearcher implements ISearcher {
             citation = highlited
         } else {
             def line = content.split("\n")[0]
-            citation = ((line.length()> MAX_LENGTH_FIRST_LINE)?line.substring(0,MAX_LENGTH_FIRST_LINE):line) + " ... "
+            citation = ((line.length() > MAX_LENGTH_FIRST_LINE) ? line.substring(0, MAX_LENGTH_FIRST_LINE) : line) + " ... "
         }
         return citation
     }

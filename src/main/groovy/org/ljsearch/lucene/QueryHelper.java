@@ -8,6 +8,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.util.BytesRef;
+import org.ljsearch.IndexedType;
 
 import java.util.Date;
 
@@ -33,11 +34,8 @@ public final class QueryHelper {
         return parser.parse(QueryParser.escape(story));
     }
 
-    public static Query generate(String words, String journal, String poster) throws ParseException {
-        return generate(words, journal, poster, null, null);
-    }
 
-    public static Query generate(String words, String journal, String poster, Date dateFrom, Date dateTo) throws ParseException {
+    public static Query generate(String words, String journal, String poster, Date dateFrom, Date dateTo, IndexedType type) throws ParseException {
 
         BooleanQuery.Builder builder = new BooleanQuery.Builder();;
         if (!StringUtils.isEmpty(words)) {
@@ -53,6 +51,11 @@ public final class QueryHelper {
 
         if (!StringUtils.isEmpty(poster)) {
             Query qp = new TermQuery(new Term(LuceneBinding.POSTER_FIELD, poster));
+            builder = builder.add(qp, BooleanClause.Occur.MUST);
+        }
+
+        if (type!=null) {
+            Query qp = new TermQuery(new Term(LuceneBinding.TYPE_FIELD, type.toString().toLowerCase()));
             builder = builder.add(qp, BooleanClause.Occur.MUST);
         }
 

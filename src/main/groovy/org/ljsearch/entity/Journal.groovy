@@ -18,4 +18,5 @@ class Journal {
     @JoinColumn(name="user")
     LJUser user;
     Date last;
+    Date lastcomment;
 }

@@ -5,6 +5,7 @@ import org.ljsearch.entity.IJournalRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 
 /**
@@ -12,25 +13,14 @@ import org.springframework.stereotype.Service
  */
 @Service
 @CompileStatic
-class StartDownloads implements Runnable {
-
-    static Logger logger = LoggerFactory.getLogger(StartDownloads.class)
+class StartDownloads extends StartDownloadsBase {
 
     @Autowired
-    IJournalRepository repo
-    @Autowired
+    @Qualifier("postsdownloading")
     IDownloading downloading;
 
-
     @Override
-    public void run() {
-        def journals = repo.findAll()
-        logger.info("Got {} journals", journals.size())
-        journals.each {
-            logger.info("Starting download for {} ", it.journal)
-            downloading.download(it);
-        }
-
-
+    String getName() {
+        return "Posts"
     }
 }

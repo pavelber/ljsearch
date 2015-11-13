@@ -29,4 +29,9 @@
             </column>
         </createTable>
     </changeSet>
+    <changeSet id="comments timestamp" author="Pavel">
+        <addColumn tableName="journals">
+            <column name="lastcomment" type="timestamp"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

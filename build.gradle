@@ -48,6 +48,8 @@ dependencies {
     compile 'org.apache.lucene:lucene-highlighter:5.3.1'
 
     compile 'org.apache.commons:commons-lang3:3.4'
+    compile 'commons-collections:commons-collections:3.2.1'
+
 
 
     compile 'org.jsoup:jsoup:1.8.3'
@@ -62,6 +64,9 @@ dependencies {
     compile 'org.webjars:momentjs:2.10.6'
 
     compile 'org.liquibase:liquibase-core:3.4.1'
+
+    compile 'net.sourceforge.htmlcleaner:htmlcleaner:2.15'
+
 
     providedRuntime "org.springframework.boot:spring-boot-starter-tomcat"
 

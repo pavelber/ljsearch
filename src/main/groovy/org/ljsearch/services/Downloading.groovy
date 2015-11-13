@@ -1,6 +1,9 @@
 package org.ljsearch.services
 
 import groovy.transform.CompileStatic
+import org.ljsearch.IndexedType
+import org.ljsearch.comments.Comment
+import org.ljsearch.comments.ICommentsClient
 import org.ljsearch.entity.IJournalRepository
 import org.ljsearch.entity.Journal
 import org.ljsearch.katkov.lj.LJRuntimeException
@@ -21,7 +24,7 @@ import java.time.temporal.ChronoUnit
 /**
  * Created by Pavel on 9/29/2015.
  */
-@Service
+@Service("postsdownloading")
 @CompileStatic
 class Downloading implements IDownloading {
 
@@ -39,6 +42,9 @@ class Downloading implements IDownloading {
     @Autowired
     IIndexer indexer
 
+    @Autowired
+    ICommentsClient commentsClient
+
 
     @Override
     @Async
@@ -54,7 +60,18 @@ class Downloading implements IDownloading {
                 logger.info("{} : Got {} entries from {}", journal.journal, syncResult.length, maxDate);
 
                 syncResult.each { BlogEntry it ->
-                    indexer.add(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date)
+                    indexer.add(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date,IndexedType.Post)
+                    def comments
+                    try {
+                        comments = commentsClient.getComments(it.permalink)
+                    } catch (IOException e) {
+                        logger.info("Got {}, going to sleep...", e.getCause())
+                        Thread.sleep(DELAY)
+                    }
+                    comments.each { Comment  comment ->
+                        if (comment.text!=null)
+                            indexer.add("", comment.text, journal.journal, comment.poster, comment.url, comment.date, IndexedType.Comment )
+                    }
                 }
                 indexer.commit()
                 journal.last = toDate(maxDate)
