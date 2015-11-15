@@ -33,6 +33,12 @@ public final class LuceneBinding {
     public static final String ENG_CONTENT_FIELD = "engcontent";
 
 
+ /* Hebrew */
+
+    public static final String HEB_TITLE_FIELD = "hebtitle";
+    public static final String HEB_CONTENT_FIELD = "hebcontent";
+
+
 
     public static Analyzer getAnalyzer() {
 

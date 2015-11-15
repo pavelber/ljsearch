@@ -24,7 +24,11 @@ public final class QueryHelper {
                         LuceneBinding.RUS_CONTENT_FIELD,
                         /* English */
                         LuceneBinding.ENG_TITLE_FIELD,
-                        LuceneBinding.ENG_CONTENT_FIELD},
+                        LuceneBinding.ENG_CONTENT_FIELD,
+                        /* Hebrew */
+                       // LuceneBinding.HEB_TITLE_FIELD,
+                       // LuceneBinding.HEB_CONTENT_FIELD
+                        },
                 LuceneBinding.getAnalyzer());
 
         /* Operator OR is used by default */

@@ -68,6 +68,9 @@ dependencies {
     compile 'net.sourceforge.htmlcleaner:htmlcleaner:2.15'
 
 
+    compile 'com.code972.hebmorph:hebmorph-lucene:2.0.3'
+
+
     providedRuntime "org.springframework.boot:spring-boot-starter-tomcat"
 
     testCompile 'org.springframework:spring-test'
