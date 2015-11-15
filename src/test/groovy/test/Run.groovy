@@ -20,37 +20,41 @@ import java.util.regex.Pattern
 /**
  * Created by Pavel on 10/27/2015.
  */
+
 class Run {
 
-    def static formats = [
-            new SimpleDateFormat("MMMMMMM d yyyy, HH:mm:ss Z"),
-            new SimpleDateFormat("d MMM, yyyy HH:mm (Z)", Locale.forLanguageTag("ru")),
-            new SimpleDateFormat("d MMM, yyyy HH:mm:ss (Z)", Locale.forLanguageTag("ru")),
-            new SimpleDateFormat("d MMM, yyyy HH:mm:ss", Locale.forLanguageTag("ru"))
-    ]
+
 
     def static markup = [
             "//div[@id='container']"                      : [
-                    "dates"          : "//abbr/span/text()",
-                    "links"          : "//a[@class='permalink']/attribute::href",
-                    "comments"       : "//div[contains(concat(' ',@class,' '),' comment-body ')]",
-                    "collapsed_links": "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]/div/div/div[2]/ul/li[2]/a/attribute::href | //div[contains(concat(' ',@class,' '),' b-leaf-seemore-width ')]/div/span[1]/a/attribute::href",
-                    "usernames"      : "//span[@class='commenter-name']/span/attribute::data-ljuser",
+                    'blocks'   : '//div[contains(concat(" ",@class," ")," comment ")]',
+                    "link"     : ".//a[@class='permalink']/attribute::href",
+                    "date"     : ".//abbr/span/text()",
+                    "text"     : ".//div[contains(concat(' ',@class,' '),' comment-body ')]//text()",
+                    "user"     : ".//span[@class='commenter-name']/span/attribute::data-ljuser",
+                    "subject"  : ".//div[@class='comment-subject']/text()",
+                    "collapsed": "//a[@class='collapsed-comment-link']/attribute::href",
             ],
             "//html[@class='html-schemius html-adaptive']": [
-                    "dates"          : '//span[@class="b-leaf-createdtime"]/text()',
-                    "links"          : '//a[@class="b-leaf-permalink"]/attribute::href',
-                    "comments"       : '//div[@class="b-leaf-article"]',
-                    "collapsed_links": "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]/div/div/div[2]/ul/li[2]/a/attribute::href",
-                    "usernames"      : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
-                    "to_visit"       : "//span[@class='b-leaf-seemore-more']/a/attribute::href"
+                    'blocks'   : '//div[contains(concat(" ",@class," ")," comment ")' +
+                            'and not(contains(concat(" ",@class," ")," b-leaf-collapsed "))]',
+                    'link'     : './/a[@class="b-leaf-permalink"]/attribute::href',
+                    'date'     : './/span[@class="b-leaf-createdtime"]/text()',
+                    'text'     : './/div[@class="b-leaf-article"]//text()',
+                    'user'     : './/span[@class="b-leaf-username-name"]//text()',
+                    'subject'  : './/h4[@class="b-leaf-subject"]//text()',
+                    "collapsed": "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]" +
+                            "/div/div/div[2]/ul/li[2]/a/attribute::href",
+                    "to_visit" : "//span[@class='b-leaf-seemore-more']/a/attribute::href",
             ],
             "//div[@align='center']/table[@id='topbox']"  : [
-                    "dates"          : "//small/span/text()",
-                    "links"          : "//strong/a/attribute::href",
-                    "comments"       : "//div[@class='ljcmt_full']/div[2]",
-                    "collapsed_links": "//div[starts-with(@id,'ljcmt')][not (@class='ljcmt_full')]/a/attribute::href",
-                    "usernames"      : "//div[@class='ljcmt_full']/*//a/b/text()"
+                    "blocks"   : "//div[@class='ljcmt_full']",
+                    "link"     : ".//strong/a/attribute::href",
+                    "date"     : ".//small/span/text()",
+                    "text"     : "./div[2]//text()",
+                    "user"     : ".//td/span/a/b/text()",
+                    "subject"  : ".//td/h3/text()",
+                    "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
             ]]
 
 
@@ -77,7 +81,7 @@ class Run {
                 unloaded.addAll(aggregate.collapsed_links)
                 unloaded = unloaded - visited
                 unloaded = unloaded - loaded
-
+                println "${comments.size()} ${loaded.size()} ${unloaded.size()}"
             }
 
             int c_len = comments.size()
@@ -137,70 +141,63 @@ class Run {
             }
         }
 
-
-        def dates = getElements(xpath, xp, "dates", doc)
-        def links = getElements(xpath, xp, "links", doc)
-        def usernames = getElements(xpath, xp, "usernames", doc)
-        def collapsed_links = getElements(xpath, xp, "collapsed_links", doc)
-        def comments = getElements(xpath, xp, "comments", doc)
-        def to_visit = getElements(xpath, xp, "to_visit", doc)
-        Map<String, Comment> dic = new HashMap<>();
-        if (links.isEmpty()) {
-            return
-        }
-
-        (0..links.size() - 1).each { i ->
-            Matcher m = pattern.matcher(links[i])
+        def blocks = getElements(xpath, xp, "blocks", doc)
+        def collapsed = getStringElements(xpath, xp, 'collapsed', doc)
+        def to_visit = getStringElements(xpath, xp, "to_visit", doc)
+        def fields = ['link', 'date', 'text', 'user', 'subject']
+        def comments = [:]
+        def links = []
+        for (block in blocks) {
+            def comment = new Comment()
+            for (f in fields) {
+                comment[f] = getStringElements(xpath, xp, f, block).join(" ").trim()
+            }
+            Matcher m = pattern.matcher(comment['link'])
             if (m.find()) {
                 def cid = m.group()
-                if (!dic.containsKey(cid) || !dic[cid].full) {
-                    dic[cid] = new Comment(
-                            url: links[i],
-                            date: parseDate(dates[i]),
-                            text: comments[i],
-                            poster: usernames[i],
-                            full: true)
-                }
+                comments[cid] = comment
+            } else {
+                throw new RuntimeException()
             }
+
+            links.add(comment.link)
+
+
         }
+
 
         for (link in to_visit) {
-            collapsed_links.add(link.split('#')[0])
+            collapsed.add(link.split('#')[0])
         }
 
-        return new ParsingResult(dic: dic, links: links, collapsed_links: collapsed_links)
+        return new ParsingResult(dic: comments, links: links, collapsed_links: collapsed)
     }
 
-    private static Date parseDate(String s) {
-        for (DateFormat f : formats) {
-            try {
-                return f.parse(s)
-            }
-            catch (Exception e) {
 
-            }
-        }
-        throw new RuntimeException("Upraseable")
+
+    private static List getStringElements(XPath xpath, xp, String markupName, Object doc) {
+        return getElements(xpath, xp, markupName,doc).
+                collect {
+                    it.textContent
+                }
     }
 
-    private static List getElements(XPath xpath, xp, String markupName, Document doc) {
+    private static List getElements(XPath xpath, xp, String markupName, Object doc) {
         def object = xp[markupName]
         if (object == null) {
             return []
         }
-        return IteratorUtils.toList(xpath.compile(object).evaluate(doc, XPathConstants.NODESET).iterator()).
-                collect {
-                    it.textContent
-                }
+        return IteratorUtils.toList(xpath.compile(object).evaluate(doc, XPathConstants.NODESET).iterator())
     }
 
     public static void main(String[] args) {
 
         // def url = "http://rusisrael.livejournal.com/7642532.html"
         //println parseComments("http://rabota-il.livejournal.com/9069326.html").size()  // good
-        // println parseComments("http://potrebitel-il.livejournal.com/22412050.html").size() // good
-        // println parseComments("http://rusisrael.livejournal.com/283608.html").size() // 77 instead of 81
-        //println parseComments("http://rusisrael.livejournal.com/7635825.html").size()
+        //println parseComments("http://potrebitel-il.livejournal.com/22412050.html") // good
+        //println parseComments("http://potrebitel-il.livejournal.com/22412050.html").size() // good
+        //println parseComments("http://rusisrael.livejournal.com/283608.html").size() // 77 instead of 81
+        println parseComments("http://rusisrael.livejournal.com/7635825.html").size()
         println parseComments("http://dolboeb.livejournal.com/2868126.html").size() // pages
 
     }

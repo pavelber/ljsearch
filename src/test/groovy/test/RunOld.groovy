@@ -73,8 +73,8 @@ class RunOld {
     static def firstUnloaded(Map<String,Comment> dic, Set<String> visited) {
         for (String c : dic.keySet()) {
             if (!dic[c].full) {
-                if (!visited.contains(dic[c].url))
-                return dic[c].url
+                if (!visited.contains(dic[c].link))
+                return dic[c].link
             }
         }
         return null
@@ -139,10 +139,10 @@ class RunOld {
                 def cid = m.group()
                 if (!dic.containsKey(cid) || !dic[cid].full) {
                     dic[cid] = new Comment(
-                            url: links[i].textContent,
+                            link: links[i].textContent,
                             date: format.parse(dates[i].textContent),
                             text: comments[i].textContent,
-                            poster: usernames[i].textContent,
+                            user: usernames[i].textContent,
                             full: true)
                     links.add(p_url)
                     visited.addAll(links)
@@ -158,7 +158,7 @@ class RunOld {
 
                 if (!dic.containsKey(cid)) {
                     dic[cid] = new Comment(
-                            url: link.textContent,
+                            link: link.textContent,
                             full: false)
                 }
             }

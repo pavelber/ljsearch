@@ -70,7 +70,7 @@ class Downloading implements IDownloading {
                     }
                     comments.each { Comment  comment ->
                         if (comment.text!=null)
-                            indexer.add("", comment.text, journal.journal, comment.poster, comment.url, comment.date, IndexedType.Comment )
+                            indexer.add("", comment.text, journal.journal, comment.user, comment.link, comment.date, IndexedType.Comment )
                     }
                 }
                 indexer.commit()
