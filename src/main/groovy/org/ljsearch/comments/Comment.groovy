@@ -29,7 +29,7 @@ class Comment {
 
             }
         }
-        throw new RuntimeException("Upraseable")
+        throw new RuntimeException("Upraseable:$s")
     }
 
     void setDate(final String date) {

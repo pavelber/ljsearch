@@ -12,7 +12,7 @@ app.controller('SearchCtrl', function ($scope, $http) {
     $scope.journal = '';
     $scope.year = '';
     $scope.keywords = '';
-    $scope.type = '';
+    $scope.type = 'post';
 
     $http.get("/journals").
         success(function (data, status) {

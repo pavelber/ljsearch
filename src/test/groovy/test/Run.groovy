@@ -192,13 +192,15 @@ class Run {
 
     public static void main(String[] args) {
 
-        // def url = "http://rusisrael.livejournal.com/7642532.html"
+        //println parseComments("http://rusisrael.livejournal.com/7642532.html")
+       // println parseComments("http://tipesh-esre-ru.livejournal.com/481200.html")
+        println parseComments("http://ladies-il.livejournal.com/7098073.html")
         //println parseComments("http://rabota-il.livejournal.com/9069326.html").size()  // good
         //println parseComments("http://potrebitel-il.livejournal.com/22412050.html") // good
         //println parseComments("http://potrebitel-il.livejournal.com/22412050.html").size() // good
         //println parseComments("http://rusisrael.livejournal.com/283608.html").size() // 77 instead of 81
-        println parseComments("http://rusisrael.livejournal.com/7635825.html").size()
-        println parseComments("http://dolboeb.livejournal.com/2868126.html").size() // pages
+        //println parseComments("http://rusisrael.livejournal.com/7635825.html").size()
+        //println parseComments("http://dolboeb.livejournal.com/2868126.html").size() // pages
 
     }
 

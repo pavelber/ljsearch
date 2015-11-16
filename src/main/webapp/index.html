@@ -65,11 +65,12 @@
         <div class="form-group">
             <label class="control-label  col-sm-1">Search in </label>
 
-            <div class="controls  col-sm-2"><select id="sel" class="form-control input-block-level" ng-model="type">
-                <option value="Post">posts</option>
-                <option value="Comment">comments</option>
-                <option value="">anywhere</option>
-            </select>
+            <div class="controls  col-sm-2">
+                <select id="sel" class="form-control input-block-level" ng-model="type">
+                    <option value="Post">posts</option>
+                    <option value="Comment">comments</option>
+                    <option value="">anywhere</option>
+                </select>
             </div>
         </div>
 
@@ -96,9 +97,9 @@
     <table>
         <tr ng-repeat="post in result">
             <td><a href="{{post.url}}">{{post.title}}</a>
-                 in <a href="http://{{post.journal}}.livejournal.com/">{{post.journal}}</a>
-                 by <img src="ljuser.jpg"/><A href="http://{{post.poster}}.livejournal.com/">{{post.poster}}</A>
-                 from {{post.formateddate}}
+                in <a href="http://{{post.journal}}.livejournal.com/">{{post.journal}}</a>
+                by <img src="ljuser.jpg"/><A href="http://{{post.poster}}.livejournal.com/">{{post.poster}}</A>
+                from {{post.formateddate}}
                 <div ng-bind-html="post.text|trustAsHtml"></div>
             </td>
 
