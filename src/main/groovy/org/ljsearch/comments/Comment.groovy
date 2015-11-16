@@ -14,6 +14,7 @@ class Comment {
             new SimpleDateFormat("MMMMMMM d yyyy, HH:mm:ss Z"),
             new SimpleDateFormat("d MMM, yyyy HH:mm (Z)", Locale.forLanguageTag("ru")),
             new SimpleDateFormat("yyyy-MM-dd hh:mm aa (Z)"),
+            new SimpleDateFormat("MMM. dd, yyyy hh:mm aa (Z)"),
             new SimpleDateFormat("d MMM, yyyy HH:mm:ss (Z)", Locale.forLanguageTag("ru")),
             new SimpleDateFormat("d MMM, yyyy HH:mm:ss", Locale.forLanguageTag("ru"))
     ]
@@ -23,7 +24,7 @@ class Comment {
     private static Date parseDate(String s) {
         for (DateFormat f : formats) {
             try {
-                return f.parse(s)
+                return f.parse(s.replaceAll("st|nd|rd|th", ""))
             }
             catch (Exception e) {
 
