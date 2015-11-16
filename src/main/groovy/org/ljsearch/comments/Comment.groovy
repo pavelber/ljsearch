@@ -11,7 +11,8 @@ import java.text.SimpleDateFormat
 @Canonical
 class Comment {
     def static formats = [
-            new SimpleDateFormat("MMMMMMM d yyyy, HH:mm:ss Z"),
+            new SimpleDateFormat("MMMMMMMMM d yyyy, HH:mm:ss Z"),
+            new SimpleDateFormat("MMMMMMMMM dd yyyy, HH:mm:ss Z"),
             new SimpleDateFormat("d MMM, yyyy HH:mm (Z)", Locale.forLanguageTag("ru")),
             new SimpleDateFormat("yyyy-MM-dd hh:mm aa (Z)"),
             new SimpleDateFormat("MMM. dd, yyyy hh:mm aa (Z)"),
@@ -24,10 +25,15 @@ class Comment {
     private static Date parseDate(String s) {
         for (DateFormat f : formats) {
             try {
-                return f.parse(s.replaceAll("st|nd|rd|th", ""))
+                return f.parse(s);
             }
             catch (Exception e) {
+                try {
+                    return f.parse(s.replaceAll("st|nd|rd|th", ""))
+                }
+                catch (Exception e1) {
 
+                }
             }
         }
         throw new RuntimeException("Upraseable:$s")
