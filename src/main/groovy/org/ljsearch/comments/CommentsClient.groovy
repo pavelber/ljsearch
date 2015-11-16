@@ -83,7 +83,6 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                 unloaded.addAll(aggregate.collapsed_links)
                 unloaded = unloaded - visited
                 unloaded = unloaded - loaded
-                println "${comments.size()} ${loaded.size()} ${unloaded.size()}"
             }
 
             int c_len = comments.size()
