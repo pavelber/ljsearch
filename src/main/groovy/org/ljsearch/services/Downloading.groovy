@@ -60,17 +60,21 @@ class Downloading implements IDownloading {
                 logger.info("{} : Got {} entries from {}", journal.journal, syncResult.length, maxDate);
 
                 syncResult.each { BlogEntry it ->
-                    indexer.add(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date,IndexedType.Post)
+                    indexer.add(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date, IndexedType.Post)
                     def comments
                     try {
                         comments = commentsClient.getComments(it.permalink)
+                    } catch (FileNotFoundException e) {
+                        comments = null
                     } catch (IOException e) {
                         logger.info("Got {}, going to sleep...", e.getCause())
                         Thread.sleep(DELAY)
                     }
-                    comments.each { Comment  comment ->
-                        if (comment.text!=null)
-                            indexer.add("", comment.text, journal.journal, comment.user, comment.link, comment.date, IndexedType.Comment )
+                    if (comments != null) {
+                        comments.each { Comment comment ->
+                            if (comment.text != null)
+                                indexer.add("", comment.text, journal.journal, comment.user, comment.link, comment.date, IndexedType.Comment)
+                        }
                     }
                 }
                 indexer.commit()
