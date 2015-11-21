@@ -29,9 +29,24 @@
             </column>
         </createTable>
     </changeSet>
-    <changeSet id="comments timestamp" author="Pavel">
-        <addColumn tableName="journals">
-            <column name="lastcomment" type="timestamp"/>
-        </addColumn>
+    <changeSet id="add records table" author="Pavel">
+        <createTable tableName="records">
+            <column name="id" type="bigint"  autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="journal" type="varchar(63)"/>
+            <column name="type" type="varchar(63)"/>
+            <column name="poster" type="varchar(63)"/>
+            <column name="title" type="varchar(1024)"/>
+            <column name="url" type="varchar(1024)"/>
+            <column name="text" type="text"/>
+            <column name="date" type="timestamp"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="Create index" author="Pavel">
+        <createIndex tableName="records" indexName="date index">
+            <column name="journal"/>
+            <column name="date"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>

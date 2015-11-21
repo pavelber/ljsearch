@@ -22,13 +22,12 @@ abstract class StartDownloadsBase implements Runnable {
     public void run() {
         def journals = repo.findAll()
         IDownloading downloading = getDownloading()
-        logger.info("$name: Got {} journals", journals.size())
+        logger.info("Got {} journals", journals.size())
         journals.each {
-            logger.info("$name: Starting download for {} ", it.journal)
+            logger.info(" Starting download for {} ", it.journal)
             downloading.download(it);
         }
     }
 
     abstract IDownloading getDownloading()
-    abstract String getName()
 }

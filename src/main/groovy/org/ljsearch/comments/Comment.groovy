@@ -2,45 +2,19 @@ package org.ljsearch.comments
 
 import groovy.transform.Canonical
 
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-
+import org.ljsearch.*
 /**
  * Created by Pavel on 10/27/2015.
  */
 @Canonical
 class Comment {
-    def static formats = [
-            new SimpleDateFormat("MMMMMMMMM d yyyy, HH:mm:ss Z"),
-            new SimpleDateFormat("MMMMMMMMM dd yyyy, HH:mm:ss Z"),
-            new SimpleDateFormat("d MMM, yyyy HH:mm (Z)", Locale.forLanguageTag("ru")),
-            new SimpleDateFormat("yyyy-MM-dd hh:mm aa (Z)"),
-            new SimpleDateFormat("MMM. dd, yyyy hh:mm aa (Z)"),
-            new SimpleDateFormat("d MMM, yyyy HH:mm:ss (Z)", Locale.forLanguageTag("ru")),
-            new SimpleDateFormat("d MMM, yyyy HH:mm:ss", Locale.forLanguageTag("ru"))
-    ]
+
     String link, text, user, subject
     Date date
 
-    private static Date parseDate(String s) {
-        for (DateFormat f : formats) {
-            try {
-                return f.parse(s);
-            }
-            catch (Exception e) {
-                try {
-                    return f.parse(s.replaceAll("st|nd|rd|th", ""))
-                }
-                catch (Exception e1) {
-
-                }
-            }
-        }
-        throw new RuntimeException("Upraseable:$s")
-    }
 
     void setDate(final String date) {
-        this.date = parseDate(date)
+        this.date = DateUtils.parseDate(date)
     }
 
 

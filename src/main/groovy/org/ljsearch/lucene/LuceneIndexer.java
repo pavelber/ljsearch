@@ -57,6 +57,7 @@ public class LuceneIndexer implements IIndexer {
     public void init() throws Exception {
         Directory dir = FSDirectory.open(Paths.get(indexDir));
         init(dir);
+        commit();
     }
 
     public void init(Directory dir) throws IOException {

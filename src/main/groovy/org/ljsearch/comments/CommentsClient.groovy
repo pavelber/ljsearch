@@ -2,6 +2,8 @@ package org.ljsearch.comments
 
 import org.apache.commons.collections.IteratorUtils
 import org.htmlcleaner.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 
@@ -21,6 +23,9 @@ import java.util.regex.Pattern
  */
 @Service
 class CommentsClient implements org.ljsearch.comments.ICommentsClient {
+
+    private static Logger logger = LoggerFactory.getLogger(CommentsClient.class)
+
 
     def static markup = [
             "//div[@id='container']"                      : [
@@ -141,13 +146,17 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                 xp = v
             }
         }
-
+        def comments = [:]
+        def links = []
+        if (xp==null){
+            logger.warn("null block on!");
+            return new ParsingResult([:],[],[])
+        }
         def blocks = getElements(xpath, xp, "blocks", doc)
         def collapsed = getStringElements(xpath, xp, 'collapsed', doc)
         def to_visit = getStringElements(xpath, xp, "to_visit", doc)
         def fields = ['link', 'date', 'text', 'user', 'subject']
-        def comments = [:]
-        def links = []
+
         for (block in blocks) {
             def comment = new Comment()
             for (f in fields) {

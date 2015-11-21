@@ -18,9 +18,4 @@ class StartDownloads extends StartDownloadsBase {
     @Autowired
     @Qualifier("postsdownloading")
     IDownloading downloading;
-
-    @Override
-    String getName() {
-        return "Posts"
-    }
 }
