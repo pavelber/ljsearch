@@ -61,6 +61,7 @@ class Downloading implements IDownloading {
                     indexer.add(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date, IndexedType.Post)
                     def comments
                     try {
+                        logger.info(it.permalink)
                         comments = commentsClient.getComments(it.permalink)
                     } catch (FileNotFoundException e) {
                         comments = null

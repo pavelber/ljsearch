@@ -49,4 +49,9 @@
             <column name="date"/>
         </createIndex>
     </changeSet>
+    <changeSet id="charset" author="Pavel">
+        <sql>
+            ALTER TABLE records CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+        </sql>
+    </changeSet>
 </databaseChangeLog>

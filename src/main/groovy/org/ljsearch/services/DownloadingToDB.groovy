@@ -61,8 +61,10 @@ class DownloadingToDB implements IDownloading {
                 logger.info("{} : Got {} entries from {}", journal.journal, syncResult.length, maxDate);
 
                 syncResult.each { BlogEntry it ->
+                    logger.info(it.body)
                     recordsRepository.save(new Record(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date, IndexedType.Post))
                     def comments
+                    logger.info( it.permalink)
                     try {
                         comments = commentsClient.getComments(it.permalink)
                     } catch (FileNotFoundException e) {

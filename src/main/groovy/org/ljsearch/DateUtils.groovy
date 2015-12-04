@@ -14,6 +14,7 @@ class DateUtils {
             new SimpleDateFormat("MMMMMMMMM dd yyyy, HH:mm:ss Z"),
             new SimpleDateFormat("d MMM, yyyy HH:mm (Z)", Locale.forLanguageTag("ru")),
             new SimpleDateFormat("yyyy-MM-dd hh:mm aa (Z)"),
+            new SimpleDateFormat("dd-MMM-yyyy hh:mm aa (Z)"),
             new SimpleDateFormat("MMM. dd, yyyy hh:mm aa (Z)"),
             new SimpleDateFormat("d MMM, yyyy HH:mm:ss (Z)", Locale.forLanguageTag("ru")),
             new SimpleDateFormat("d MMM, yyyy HH:mm:ss", Locale.forLanguageTag("ru"))

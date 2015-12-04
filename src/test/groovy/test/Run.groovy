@@ -12,8 +12,6 @@ import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathExpression
 import javax.xml.xpath.XPathFactory
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -22,7 +20,6 @@ import java.util.regex.Pattern
  */
 
 class Run {
-
 
 
     def static markup = [
@@ -49,13 +46,22 @@ class Run {
             ],
             "//div[@align='center']/table[@id='topbox']"  : [
                     "blocks"   : "//div[@class='ljcmt_full']",
-                    "link"     : ".//strong/a/attribute::href",
+                    "link"     : ".//td[@class='social-links']/p/strong/a/attribute::href",
                     "date"     : ".//small/span/text()",
                     "text"     : "./div[2]//text()",
                     "user"     : ".//td/span/a/b/text()",
                     "subject"  : ".//td/h3/text()",
                     "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
-            ]]
+            ],
+            "//div[@class='bodyblock']"                   : [
+                    "blocks"   : "//div[@class='ljcmt_full']",
+                    "link"     : ".//div[@class='commentLinkbar']/ul/li[last()-1]/a/attribute::href",
+                    "date"     : ".//div[@class='commentHeader']/span[1]/text()",
+                    "text"     : ".//div[contains(concat(' ',@class,' '),' commentText ')]//text()",
+                    "user"     : ".//span[@class='ljuser']/span/attribute::data-ljuser",
+                    "subject"  : ".//span[@class='commentHeaderSubject']/text()",
+                    "collapsed": "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
+                    ]]
 
 
     static def pattern = Pattern.compile('.*([0-9]+)$')
@@ -174,9 +180,8 @@ class Run {
     }
 
 
-
     private static List getStringElements(XPath xpath, xp, String markupName, Object doc) {
-        return getElements(xpath, xp, markupName,doc).
+        return getElements(xpath, xp, markupName, doc).
                 collect {
                     it.textContent
                 }
@@ -193,8 +198,11 @@ class Run {
     public static void main(String[] args) {
 
         //println parseComments("http://rusisrael.livejournal.com/7642532.html")
-       // println parseComments("http://tipesh-esre-ru.livejournal.com/481200.html")
-        println parseComments("http://ladies-il.livejournal.com/7098073.html")
+        // println parseComments("http://tipesh-esre-ru.livejournal.com/481200.html")
+//        println parseComments("http://ladies-il.livejournal.com/7098073.html")
+        //println parseComments("http://rabota-il.livejournal.com/712789.html")
+        println parseComments("http://potrebitel-il.livejournal.com/11559996.html")
+
         //println parseComments("http://rabota-il.livejournal.com/9069326.html").size()  // good
         //println parseComments("http://potrebitel-il.livejournal.com/22412050.html") // good
         //println parseComments("http://potrebitel-il.livejournal.com/22412050.html").size() // good

@@ -51,14 +51,22 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
             ],
             "//div[@align='center']/table[@id='topbox']"  : [
                     "blocks"   : "//div[@class='ljcmt_full']",
-                    "link"     : ".//strong/a/attribute::href",
+                    "link"     : ".//td[@class='social-links']/p/strong/a/attribute::href",
                     "date"     : ".//small/span/text()",
                     "text"     : "./div[2]//text()",
                     "user"     : ".//td/span/a/b/text()",
                     "subject"  : ".//td/h3/text()",
                     "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
+            ],
+            "//div[@class='bodyblock']"                   : [
+                    "blocks"   : "//div[@class='ljcmt_full']",
+                    "link"     : ".//div[@class='commentLinkbar']/ul/li[last()-1]/a/attribute::href",
+                    "date"     : ".//div[@class='commentHeader']/span[1]/text()",
+                    "text"     : ".//div[contains(concat(' ',@class,' '),' commentText ')]//text()",
+                    "user"     : ".//span[@class='ljuser']/span/attribute::data-ljuser",
+                    "subject"  : ".//span[@class='commentHeaderSubject']/text()",
+                    "collapsed": "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
             ]]
-
 
 
 
@@ -80,7 +88,11 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
         while (true) {
             while (unloaded.size() > 0) {
                 def url = unloaded.pop()
-                def doc = treeFromUrl(url)
+                try {
+                    def doc = treeFromUrl(url)
+                } catch (Exception w) {
+                    break;
+                }
                 visited.add(url)
                 def aggregate = parseTree(doc)
                 comments.putAll(aggregate.dic)
@@ -126,7 +138,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
         TagNode node = cleaner.clean(new URL(url));
         //assert page.status_code == 200
         //assert "<title>LiveJournal Bot Policy</title>" not in page.text
-        String str = new SimpleXmlSerializer(cleaner.getProperties()).getXmlAsString(node);
+        String str = new SimpleXmlSerializer(cleaner.getProperties()).getXmlAsString(node, "UTF-8");
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         return new DomSerializer(props).createDOM(node);
@@ -150,7 +162,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
         def links = []
         if (xp==null){
             logger.warn("null block on!");
-            return new ParsingResult([:],[],[])
+            return new ParsingResult(dic:[:],links:[],collapsed_links:[])
         }
         def blocks = getElements(xpath, xp, "blocks", doc)
         def collapsed = getStringElements(xpath, xp, 'collapsed', doc)
