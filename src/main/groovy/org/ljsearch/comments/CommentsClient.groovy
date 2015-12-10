@@ -88,8 +88,9 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
         while (true) {
             while (unloaded.size() > 0) {
                 def url = unloaded.pop()
+                def doc
                 try {
-                    def doc = treeFromUrl(url)
+                    doc = treeFromUrl(url)
                 } catch (Exception w) {
                     break;
                 }

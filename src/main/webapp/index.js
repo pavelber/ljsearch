@@ -70,6 +70,11 @@ app.controller('SearchCtrl', function ($scope, $http) {
                         data[i].formateddate = moment(data[i].date).format("MMMM Do YYYY");
                     }
                 }
+                if ( $scope.result.length ==0) {
+                    $scope.message = "Your search did not match any documents. Search for 'жопа' instead";
+                }else {
+                    $scope.message ="";
+                }
             })
             .
             error(function (data, status) {

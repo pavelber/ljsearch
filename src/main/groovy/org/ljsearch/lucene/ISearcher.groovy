@@ -7,5 +7,5 @@ import org.ljsearch.IndexedType
  */
 interface ISearcher {
 
-    List<Post> search(String journal, String poster, String text, Date from, Date t, IndexedType type)
+    Set<Post> search(String journal, String poster, String text, Date from, Date t, IndexedType type)
 }

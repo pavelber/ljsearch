@@ -42,7 +42,7 @@ class LuceneSearcher implements ISearcher {
     }
 
     @Override
-    List<Post> search(String journal, String poster, String text, Date from, Date to, IndexedType type) {
+    Set<Post> search(String journal, String poster, String text, Date from, Date to, IndexedType type) {
 
         synchronized (this) {//todo bad
             if (mgr == null) {
@@ -52,7 +52,7 @@ class LuceneSearcher implements ISearcher {
 
         mgr.maybeRefresh()
         def searcher = mgr.acquire()
-        def results = []
+        Set<Post> results = new HashSet()
         if (!StringUtils.isEmpty(journal) ||
                 !StringUtils.isEmpty(poster) ||
                 !StringUtils.isEmpty(text) ||
@@ -84,7 +84,7 @@ class LuceneSearcher implements ISearcher {
                             url: d.get(LuceneBinding.URL_FIELD),
                             date: DateTools.stringToDate(d.get(LuceneBinding.DATE_FIELD)).time,
                             text: citation,
-                        //    type: IndexedType.valueOf(d.get(LuceneBinding.TYPE_FIELD))
+                            type: IndexedType.valueOf(d.get(LuceneBinding.TYPE_FIELD))
                     )
                 }
             } finally {
