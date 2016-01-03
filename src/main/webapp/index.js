@@ -6,12 +6,13 @@ app.filter('trustAsHtml', function ($sce) {
     };
 });
 
-app.controller('SearchCtrl', function ($scope, $http) {
+app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, $http, $location) {
+    params = $location.search();
     $scope.url = '/search'; // The url of our search
-    $scope.poster = '';
-    $scope.journal = '';
-    $scope.year = '';
-    $scope.keywords = '';
+    $scope.poster =  params['poster'];
+    $scope.journal = params['journal'];
+    $scope.year = params['year'];
+    $scope.keywords = params['keywords'];
     $scope.type = 'Post';
 
     $http.get("/journals").
@@ -62,6 +63,12 @@ app.controller('SearchCtrl', function ($scope, $http) {
         // The request is a JSON request.
         $http.get($scope.url + "?journal=" + $scope.journal + "&term=" + $scope.keywords + "&poster=" + $scope.poster + "&type=" + $scope.type+"&year="+$scope.year).
             success(function (data, status) {
+                $location.search({
+                    poster: $scope.poster,
+                    journal: $scope.journal,
+                    year: $scope.year,
+                    keywords: $scope.keywords
+                });
                 $scope.status = status;
                 $scope.data = data;
                 $scope.result = data; // Show result from server in our <pre></pre> element
@@ -82,4 +89,4 @@ app.controller('SearchCtrl', function ($scope, $http) {
                 $scope.status = status;
             });
     };
-});
+}]);
