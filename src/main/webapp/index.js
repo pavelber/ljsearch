@@ -13,7 +13,10 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
     $scope.journal = params['journal'];
     $scope.year = params['year'];
     $scope.keywords = params['keywords'];
-    $scope.type = 'Post';
+    $scope.type = params['type'];
+    if (!$scope.type){
+        $scope.type = 'Post'
+    }
 
     $http.get("/journals").
         success(function (data, status) {
@@ -67,7 +70,8 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
                     poster: $scope.poster,
                     journal: $scope.journal,
                     year: $scope.year,
-                    keywords: $scope.keywords
+                    keywords: $scope.keywords,
+                    type: $scope.type
                 });
                 $scope.status = status;
                 $scope.data = data;
