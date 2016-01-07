@@ -32,6 +32,7 @@ class SearchController {
             @RequestParam(value = "type", required = false) String type
     ) {
         journal = (journal == 'null' || journal == 'undefined') ? "" : journal
+        poster = (poster == 'null' || poster == 'undefined') ? "" : poster
         Integer year = (yearStr == 'null' || yearStr == "" || yearStr == null || yearStr == 'undefined') ? null : Integer.parseInt(yearStr)
         Date from, to;
         if (year != null) {
