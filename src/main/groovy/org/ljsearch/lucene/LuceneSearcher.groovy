@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.DateTools
 import org.apache.lucene.document.Document
-import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search.*
 import org.apache.lucene.search.highlight.*
 import org.apache.lucene.store.Directory
@@ -42,7 +41,7 @@ class LuceneSearcher implements ISearcher {
     }
 
     @Override
-    Set<Post> search(String journal, String poster, String text, Date from, Date to, IndexedType type) {
+    List<Post> search(String journal, String poster, String text, Date from, Date to, IndexedType type) {
 
         synchronized (this) {//todo bad
             if (mgr == null) {
@@ -52,7 +51,7 @@ class LuceneSearcher implements ISearcher {
 
         mgr.maybeRefresh()
         def searcher = mgr.acquire()
-        Set<Post> results = new HashSet()
+        List<Post> results = []
         if (!StringUtils.isEmpty(journal) ||
                 !StringUtils.isEmpty(poster) ||
                 !StringUtils.isEmpty(text) ||
@@ -60,18 +59,17 @@ class LuceneSearcher implements ISearcher {
                 from != null || to != null
         ) {
             try {
-                Query q = QueryHelper.generate(text, journal, poster, from, to, type);
-                SortField startField = new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true);
+                Query q = QueryHelper.generate(text, journal, poster, from, to, type)
+                SortField startField = new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true)
 
-                Sort sort = new Sort(startField);
-                Collector collector = TopFieldCollector.create(sort, 400, true, false, false);
-             //   searcher.search(q, collector);
-                def q1 = new QueryParser("content", LuceneBinding.getAnalyzer()).parse("+contenttype:Post")
-                searcher.search(q, collector);
-                ScoreDoc[] hits = collector.topDocs().scoreDocs;
+                Sort sort = new Sort(startField)
+
+                TopDocs docs = searcher.search(q, 400, sort)
+
+                ScoreDoc[] hits = docs.scoreDocs
                 for (int i = 0; i < hits.length; ++i) {
-                    int docId = hits[i].doc;
-                    Document d = searcher.doc(docId);
+                    int docId = hits[i].doc
+                    Document d = searcher.doc(docId)
 
                     def content = d.get(LuceneBinding.CONTENT_FIELD)
 

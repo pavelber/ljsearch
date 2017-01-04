@@ -7,6 +7,7 @@ import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
@@ -76,10 +77,11 @@ public class LuceneIndexer implements IIndexer {
         Document doc = new Document();
 
         String value = DateHelper.toString(date);
-        doc.add(new Field(LuceneBinding.DATE_FIELD,
+        doc.add(new TextField(LuceneBinding.DATE_FIELD,
                 value,
-                Field.Store.YES, Field.Index.NOT_ANALYZED));
+                Field.Store.YES));
         doc.add(new SortedDocValuesField(LuceneBinding.DATE_FIELD, new BytesRef(value)));
+
         addField(url, doc, LuceneBinding.URL_FIELD);
         addField(journal, doc, LuceneBinding.JOURNAL_FIELD);
         addField(type.name(), doc, LuceneBinding.TYPE_FIELD);
