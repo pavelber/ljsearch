@@ -7,9 +7,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
 
-/**
- * Created by Pavel on 10/5/2015.
- */
+
 @Controller
 class JournalsController {
 
@@ -19,7 +17,7 @@ class JournalsController {
 
     @RequestMapping("/journals")
     @ResponseBody String get() {
-        def journals = repo.findAll()
+        def journals = repo.findByPrrivate(false)
         journals.each {it.user = null}
         return   new JsonBuilder( journals).toPrettyString()
     }

@@ -2,7 +2,6 @@ package org.ljsearch.controllers
 
 import groovy.transform.CompileStatic
 import org.ljsearch.DateUtils
-import org.ljsearch.IndexedType
 import org.ljsearch.entity.IJournalRepository
 import org.ljsearch.entity.IRecordsRepository
 import org.ljsearch.entity.Journal
@@ -19,9 +18,6 @@ import org.springframework.web.bind.annotation.ResponseBody
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-/**
- * Created by Pavel on 10/5/2015.
- */
 @Controller
 @CompileStatic
 class ImportController {
@@ -45,7 +41,7 @@ class ImportController {
         while (true) {
             LocalDate maxDate = (journal.last ? DateUtils.fromDate(journal.last) : DateUtils.START_DATE).plus(1, ChronoUnit.DAYS);
             if (maxDate.isAfter(LocalDate.now().minusDays(2))) {
-                break;
+                break
             }
             Set<Record> records = recordsRepo.findByJournalAndDateBetween(
                     journalName,
@@ -58,8 +54,8 @@ class ImportController {
             indexer.commit()
             journal.last = DateUtils.toDate(maxDate)
             repo.save(journal)
-
-
         }
+
+        return "done"
     }
 }

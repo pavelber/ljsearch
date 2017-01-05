@@ -11,9 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
 
-/**
- * Created by Pavel on 10/5/2015.
- */
 @Controller
 @CompileStatic
 class SearchController {
@@ -35,7 +32,7 @@ class SearchController {
         journal = (journal == 'null' || journal == 'undefined') ? "" : journal
         poster = (poster == 'null' || poster == 'undefined') ? "" : poster
         Integer year = (yearStr == 'null' || yearStr == "" || yearStr == null || yearStr == 'undefined') ? null : Integer.parseInt(yearStr)
-        Date from, to;
+        Date from = null, to = null
         if (year != null) {
             from = new GregorianCalendar(year, Calendar.JANUARY, 1).time
             to = new GregorianCalendar(year + 1, Calendar.JANUARY, 1).time

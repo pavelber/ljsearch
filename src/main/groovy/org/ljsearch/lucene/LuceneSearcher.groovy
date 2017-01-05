@@ -10,19 +10,21 @@ import org.apache.lucene.search.highlight.*
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.ljsearch.IndexedType
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.PropertySource
 import org.springframework.stereotype.Service
 
 import java.nio.file.Paths
 
-/**
- * Created by Pavel on 10/5/2015.
- */
+
 @Service
 @PropertySource("classpath:ljsearch.properties")
 @CompileStatic
 class LuceneSearcher implements ISearcher {
+
+    @Autowired
+    QueryCreator queryCreator
 
     public static final int MAX_LENGTH_FIRST_LINE = 100
     @Value('${index.dir}')
@@ -59,7 +61,7 @@ class LuceneSearcher implements ISearcher {
                 from != null || to != null
         ) {
             try {
-                Query q = QueryHelper.generate(text, journal, poster, from, to, type)
+                Query q = queryCreator.generate(text, journal, poster, from, to, type)
                 SortField startField = new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true)
 
                 Sort sort = new Sort(startField)

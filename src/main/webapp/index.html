@@ -4,6 +4,7 @@
     <title>
         lj search
     </title>
+    <base href="/">
     <link rel="stylesheet" href="/webjars/bootstrap/3.3.5/css/bootstrap.min.css" type="text/css"/>
     <link rel="stylesheet" href="index.css" type="text/css"/>
     <script src="/webjars/angularjs/1.4.6/angular.min.js"></script>
@@ -13,17 +14,6 @@
 <body ng-app="app">
 
 <div ng-controller="SearchCtrl">
-
-    <!-- <table class="table table-condensed table-striped">
-         <tr>
-             <th>News</th>
-
-         </tr>
-         <tr ng-repeat="message in messages">
-             <td>{{message.message}}</td>
-
-         </tr>
-     </table>-->
 
     <form class="well form-horizontal" role="form">
         <div class="form-group">
@@ -38,9 +28,9 @@
         <div class="form-group">
             <label class="control-label  col-sm-1">in journal </label>
 
-            <div class="controls  col-sm-2"><select id="sel" class="form-control input-block-level" ng-model="journal"
+            <div class="controls  col-sm-2"><select id="sel" class="form-control input-block-level" ng-model=""
                                                     ng-options="obj.id as obj.journal for obj in journals">
-                <option value=""></option>
+                </option>
             </select>
             </div>
         </div>

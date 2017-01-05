@@ -31,7 +31,7 @@
     </changeSet>
     <changeSet id="add records table" author="Pavel">
         <createTable tableName="records">
-            <column name="id" type="bigint"  autoIncrement="true">
+            <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="journal" type="varchar(63)"/>
@@ -53,5 +53,12 @@
         <sql>
             ALTER TABLE records CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
         </sql>
+    </changeSet>
+    <changeSet id="add private journals" author="Pavel">
+        <addColumn tableName="journals">
+            <column name="private" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>
