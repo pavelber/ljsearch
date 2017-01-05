@@ -28,7 +28,7 @@
         <div class="form-group">
             <label class="control-label  col-sm-1">in journal </label>
 
-            <div class="controls  col-sm-2"><select id="sel" class="form-control input-block-level" ng-model=""
+            <div class="controls  col-sm-2"><select id="journals" class="form-control input-block-level" ng-model="journal"
                                                     ng-options="obj.id as obj.journal for obj in journals">
                 </option>
             </select>
@@ -38,7 +38,7 @@
         <div class="form-group">
             <label class="control-label  col-sm-1">year </label>
 
-            <div class="controls  col-sm-1"><select id="sel" class="form-control input-block-level" ng-model="year"
+            <div class="controls  col-sm-1"><select id="years" class="form-control input-block-level" ng-model="year"
                                                     ng-options="obj for obj in years">
                 <option value=""></option>
             </select>

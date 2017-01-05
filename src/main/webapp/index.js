@@ -22,19 +22,24 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
         $scope.type = 'Post'
     }
 
-    var journal = $location.search().journal;
+    var journal = $location.search().private;
     if (journal) {
-        $scope.journals = [{journal:journal}];
+        $scope.journal = journal;
+        $scope.journals = [{id:journal,journal:journal}];
     } else {
         $http.get("/journals").success(function (data, status) {
             $scope.jorunalsstatus = status;
-            $scope.journals = data;
+            $scope.journals = [];
+            $scope.journals .push({id:"", journal:""});
+
             for (var i = 0; i < data.length; i++) {
                 if (data[i].last != null) {
                     data[i].formateddate = moment(data[i].last).format("MMMM Do YYYY");
                 }
                 data[i].id = data[i].journal
+                $scope.journals.push({id:data[i].id, journal: data[i].journal,formateddate: data[i].formateddate });
             }
+            $scope.journal = "";
         })
             .error(function (data, status) {
                 $scope.journals = data || "Request failed";
