@@ -55,7 +55,7 @@ public class XMLRPCClientImpl implements XMLRPCClient {
     private static String HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC = "http://www.livejournal.com/interface/xmlrpc";
 
 
-    public XMLRPCClientImpl() {
+    XMLRPCClientImpl() {
         try {
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(new URL(HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC));
@@ -64,14 +64,15 @@ public class XMLRPCClientImpl implements XMLRPCClient {
             client.setTypeFactory(new LJTypeFactory(client));
             logger.debug("XmlRpcClientConfigImpl was configured");
         } catch (MalformedURLException e) {
-            new RuntimeException("Failed to create server URL:" + HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC, e);
+            throw new RuntimeException("Failed to create server URL:" + HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC, e);
         }
     }
 
     public BlogEntry[] getevents(GetEventsArgument argument, int timeout) throws LJRuntimeException {
         logger.debug("Entering getevents(" + argument + ", " + timeout + ")");
+        String journal = (String) argument.get("usejournal");
         argument.stripNullValues();
-        List<BlogEntry> result = new ArrayList<BlogEntry>();
+        List<BlogEntry> result = new ArrayList<>();
         try {
             Map eventsMap;
             eventsMap = (Map) doXmlRpcCall("LJ.XMLRPC.getevents", new Object[]{argument}, timeout);
@@ -79,7 +80,7 @@ public class XMLRPCClientImpl implements XMLRPCClient {
 
             for (Object anArray : array) {
                 Map map = (Map) anArray;
-                BlogEntry entry = new BlogEntry(map);
+                BlogEntry entry = new BlogEntry(journal, map);
                 result.add(entry);
             }
             BlogEntry[] entries = result.toArray(new BlogEntry[result.size()]);
@@ -153,7 +154,7 @@ public class XMLRPCClientImpl implements XMLRPCClient {
     public DayCount[] getdaycounts(GetDayCountsArgument argument, int timeout) throws LJRuntimeException {
         logger.debug("Entering getdaycounts(" + argument + ", " + timeout + ")");
         argument.stripNullValues();
-        List<DayCount> result = new ArrayList<DayCount>();
+        List<DayCount> result = new ArrayList<>();
         try {
             Map map = (Map) doXmlRpcCall("LJ.XMLRPC.getdaycounts", new Object[]{argument}, timeout);
             for (Object object : (Object[]) map.get("daycounts")) {

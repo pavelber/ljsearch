@@ -40,7 +40,7 @@ import java.util.Map;
  * Represent blog entry
  */
 public class BlogEntry {
-    public static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy'-'MM'-'dd' 'HH:mm:ss");
+    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy'-'MM'-'dd' 'HH:mm:ss");
     private int itemid;
     private String permalink;
     private Integer anum;
@@ -54,7 +54,7 @@ public class BlogEntry {
     //TODO: implement support for: props (metadata)
 
 
-    public BlogEntry(Map map) throws UnsupportedEncodingException, ParseException {
+    public BlogEntry(String journal, Map map) throws UnsupportedEncodingException, ParseException {
         itemid = (Integer) map.get("itemid");
         permalink = (String) map.get("url");
         anum = (Integer) map.get("anum");
@@ -63,7 +63,8 @@ public class BlogEntry {
         date = LJHelpers.parseDate((String) map.get("eventtime"), DATEFORMAT);
         security = SecurityType.getInstance((String) map.get("security"));
         allowmask = (Integer) map.get("allowmask");
-        poster =  map.get("poster").toString();
+        poster = (String) map.get("poster");
+        if (poster == null) poster = journal;// private journal
     }
 
     /**
