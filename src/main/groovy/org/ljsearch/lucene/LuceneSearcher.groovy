@@ -16,6 +16,7 @@ import org.springframework.context.annotation.PropertySource
 import org.springframework.stereotype.Service
 
 import java.nio.file.Paths
+import java.util.stream.Collectors
 
 
 @Service
@@ -91,7 +92,7 @@ class LuceneSearcher implements ISearcher {
                 mgr.release(searcher)
             }
         }
-        return results
+        return results.stream().distinct().collect(Collectors.toList())
     }
 
     private createCitation(Query q, String content) {
