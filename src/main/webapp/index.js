@@ -18,12 +18,13 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
     $scope.year = params['year'];
     $scope.keywords = params['keywords'];
     $scope.type = params['type'];
+    
     if (!$scope.type) {
         $scope.type = 'Post'
     }
-
-    var journal = $location.search().private;
-    if (journal) {
+    var journal = params['private'];
+    $scope.private = journal;
+     if (journal) {
         $scope.journal = journal;
         $scope.journals = [{id:journal,journal:journal}];
     } else {
@@ -58,13 +59,16 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
         // Create the http post request
         // the data holds the keywords
         // The request is a JSON request.
-        $http.get($scope.url + "?journal=" + $scope.journal + "&term=" + $scope.keywords + "&poster=" + $scope.poster + "&type=" + $scope.type + "&year=" + $scope.year).success(function (data, status) {
+        $http.get($scope.url + "?journal=" + $scope.journal + "&term=" + $scope.keywords + 
+                  "&poster=" + $scope.poster + "&type=" + $scope.type + "&year=" + $scope.year + "&private=" + $scope.private).
+        success(function (data, status) {
             $location.search({
                 poster: $scope.poster,
                 journal: $scope.journal,
                 year: $scope.year,
                 keywords: $scope.keywords,
-                type: $scope.type
+                type: $scope.type,
+                private: $scope.priate,
             });
             $scope.status = status;
             $scope.data = data;
