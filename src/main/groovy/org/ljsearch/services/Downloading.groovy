@@ -80,7 +80,7 @@ class Downloading implements IDownloading {
                 journal.last = DateUtils.toDate(maxDate)
                 repo.save(journal)
             } catch (LJRuntimeException e) {
-                logger.info("Got {}, going to sleep...", e.getCause().toString())
+                logger.error("Exception going to sleep...", e)
                 Thread.sleep(DateUtils.DELAY)
             }
 

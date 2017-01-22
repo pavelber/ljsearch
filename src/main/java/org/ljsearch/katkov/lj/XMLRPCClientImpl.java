@@ -36,8 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +82,13 @@ public class XMLRPCClientImpl implements XMLRPCClient {
 
             for (Object anArray : array) {
                 Map map = (Map) anArray;
-                BlogEntry entry = new BlogEntry(journal, map);
+                BlogEntry entry = null;
+                try {
+                    entry = new BlogEntry(journal, map);
+                } catch (Exception e) {
+                    logger.error("failed:"+map.get("url"));
+                    throw e;
+                }
                 result.add(entry);
             }
             BlogEntry[] entries = result.toArray(new BlogEntry[result.size()]);

@@ -37,7 +37,7 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
                 if (data[i].last != null) {
                     data[i].formateddate = moment(data[i].last).format("MMMM Do YYYY");
                 }
-                data[i].id = data[i].journal
+                data[i].id = data[i].journal;
                 $scope.journals.push({id:data[i].id, journal: data[i].journal,formateddate: data[i].formateddate });
             }
             $scope.journal = "";
@@ -68,7 +68,7 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
                 year: $scope.year,
                 keywords: $scope.keywords,
                 type: $scope.type,
-                private: $scope.priate,
+                private: $scope.private
             });
             $scope.status = status;
             $scope.data = data;

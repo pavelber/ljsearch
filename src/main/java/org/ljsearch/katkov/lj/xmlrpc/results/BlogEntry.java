@@ -63,8 +63,7 @@ public class BlogEntry {
         date = LJHelpers.parseDate((String) map.get("eventtime"), DATEFORMAT);
         security = SecurityType.getInstance((String) map.get("security"));
         allowmask = (Integer) map.get("allowmask");
-        poster = (String) map.get("poster");
-        if (poster == null) poster = journal;// private journal
+        poster = map.get("poster") == null ? journal : map.get("poster").toString();
     }
 
     /**
