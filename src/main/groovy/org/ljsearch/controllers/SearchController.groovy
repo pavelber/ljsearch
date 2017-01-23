@@ -31,7 +31,7 @@ class SearchController {
         term = (term == 'null' || term == 'undefined') ? "" : term
         journal = (journal == 'null' || journal == 'undefined') ? "" : journal
         poster = (poster == 'null' || poster == 'undefined') ? "" : poster
-        Integer year = (yearStr == 'null' || yearStr == "" || yearStr == null || yearStr == 'undefined') ? null : Integer.parseInt(yearStr)
+        Integer year = (yearStr == 'null' || yearStr == "" || yearStr == null || yearStr == 'undefined'|| yearStr == 'NaN') ? null : Integer.parseInt(yearStr)
         Date from = null, to = null
         if (year != null) {
             from = new GregorianCalendar(year, Calendar.JANUARY, 1).time

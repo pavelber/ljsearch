@@ -13,11 +13,7 @@ app.filter('trustAsHtml', function ($sce) {
 app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, $http, $location) {
     params = $location.search();
     $scope.url = '/search'; // The url of our search
-    $scope.poster = params['poster'];
-    $scope.journal = params['journal'];
-    $scope.year = params['year'];
-    $scope.keywords = params['keywords'];
-    $scope.type = params['type'];
+
     
     if (!$scope.type) {
         $scope.type = 'Post'
@@ -40,7 +36,7 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
                 data[i].id = data[i].journal;
                 $scope.journals.push({id:data[i].id, journal: data[i].journal,formateddate: data[i].formateddate });
             }
-            $scope.journal = "";
+            $scope.journal = params['journal'];
         })
             .error(function (data, status) {
                 $scope.journals = data || "Request failed";
@@ -52,6 +48,11 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
     $scope.years = [];
     for(var y = 2001;y<=currentYear;y++) $scope.years.push(y)
 
+    $scope.poster = params['poster'];
+
+    $scope.year = parseInt(params['year']);
+    $scope.keywords = params['keywords'];
+    $scope.type = params['type'];
 
     // The function that will be executed on button click (ng-click="search()")
     $scope.search = function () {
@@ -89,4 +90,7 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
                 $scope.status = status;
             });
     };
+    if ($scope.poster || $scope.year || $scope.keywords || $scope.journal) {
+        $scope.search()
+    }
 }]);
