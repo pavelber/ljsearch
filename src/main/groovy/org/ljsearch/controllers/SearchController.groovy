@@ -37,8 +37,12 @@ class SearchController {
             from = new GregorianCalendar(year, Calendar.JANUARY, 1).time
             to = new GregorianCalendar(year + 1, Calendar.JANUARY, 1).time
         }
-        IndexedType indexedType = StringUtils.isEmpty(type) ? null : IndexedType.valueOf(type)
+        IndexedType indexedType = isEmpty(type) ? null : IndexedType.valueOf(type)
         def results = seacher.search(journal, poster, term, from, to, indexedType)
         return new JsonBuilder(results).toPrettyString()
+    }
+
+    private static boolean isEmpty(String term) {
+        StringUtils.isEmpty(term) || term == 'undefined'
     }
 }
