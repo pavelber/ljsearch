@@ -24,7 +24,8 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
         $scope.journal = journal;
         $scope.journals = [{id:journal,journal:journal}];
     } else {
-        $http.get("/journals").success(function (data, status) {
+         $scope.journal = params['journal'];
+         $http.get("/journals").success(function (data, status) {
             $scope.jorunalsstatus = status;
             $scope.journals = [];
             $scope.journals .push({id:"", journal:""});
@@ -36,8 +37,8 @@ app.controller('SearchCtrl', ['$scope', '$http', '$location', function ($scope, 
                 data[i].id = data[i].journal;
                 $scope.journals.push({id:data[i].id, journal: data[i].journal,formateddate: data[i].formateddate });
             }
-            $scope.journal = params['journal'];
-        })
+             $scope.journal = params['journal'];
+         })
             .error(function (data, status) {
                 $scope.journals = data || "Request failed";
                 $scope.jorunalsstatus = status;
