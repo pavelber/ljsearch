@@ -13,8 +13,6 @@ import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathExpression
 import javax.xml.xpath.XPathFactory
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -28,7 +26,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
 
 
     def static markup = [
-            "//div[@id='container']"                      : [
+            "//div[@id='container']"                         : [
                     'blocks'   : '//div[contains(concat(" ",@class," ")," comment ")]',
                     "link"     : ".//a[@class='permalink']/attribute::href",
                     "date"     : ".//abbr/span/text()",
@@ -37,7 +35,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                     "subject"  : ".//div[@class='comment-subject']/text()",
                     "collapsed": "//a[@class='collapsed-comment-link']/attribute::href",
             ],
-            "//html[@class='html-schemius html-adaptive']": [
+            "//html[@class='html-schemius html-adaptive']"   : [
                     'blocks'   : '//div[contains(concat(" ",@class," ")," comment ")' +
                             'and not(contains(concat(" ",@class," ")," b-leaf-collapsed "))]',
                     'link'     : './/a[@class="b-leaf-permalink"]/attribute::href',
@@ -49,7 +47,16 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                             "/div/div/div[2]/ul/li[2]/a/attribute::href",
                     "to_visit" : "//span[@class='b-leaf-seemore-more']/a/attribute::href",
             ],
-            "//div[@align='center']/table[@id='topbox']"  : [
+            "//html[contains(@class, 'html-s2-no-adaptive')]": [
+                    "blocks"   : '//div[starts-with(@id, "ljcmt")]',
+                    "link"     : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
+                    "date"     : ".//tr/td/span/text()",
+                    "text"     : "./div[2]//text()",
+                    "user"     : ".//td/span/a/b/text()",
+                    "subject"  : ".//td/h3/text()",
+                    "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
+            ],
+            "//div[@align='center']/table[@id='topbox']"     : [
                     "blocks"   : "//div[@class='ljcmt_full']",
                     "link"     : ".//td[@class='social-links']/p/strong/a/attribute::href",
                     "date"     : ".//small/span/text()",
@@ -58,7 +65,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                     "subject"  : ".//td/h3/text()",
                     "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
             ],
-            "//div[@class='bodyblock']"                   : [
+            "//div[@class='bodyblock']"                      : [
                     "blocks"   : "//div[@class='ljcmt_full']",
                     "link"     : ".//div[@class='commentLinkbar']/ul/li[last()-1]/a/attribute::href",
                     "date"     : ".//div[@class='commentHeader']/span[1]/text()",
@@ -67,8 +74,6 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                     "subject"  : ".//span[@class='commentHeaderSubject']/text()",
                     "collapsed": "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
             ]]
-
-
 
 
     static def pattern = Pattern.compile('.*([0-9]+)$')
@@ -161,9 +166,9 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
         }
         def comments = [:]
         def links = []
-        if (xp==null){
+        if (xp == null) {
             logger.warn("null block on!");
-            return new ParsingResult(dic:[:],links:[],collapsed_links:[])
+            return new ParsingResult(dic: [:], links: [], collapsed_links: [])
         }
         def blocks = getElements(xpath, xp, "blocks", doc)
         def collapsed = getStringElements(xpath, xp, 'collapsed', doc)
@@ -197,9 +202,8 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
     }
 
 
-
     private static List getStringElements(XPath xpath, xp, String markupName, Object doc) {
-        return getElements(xpath, xp, markupName,doc).
+        return getElements(xpath, xp, markupName, doc).
                 collect {
                     it.textContent
                 }

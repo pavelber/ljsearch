@@ -9,6 +9,6 @@ import org.ljsearch.comments.CommentsClient
 class RunClient {
     public static void main(String[] args) {
         CommentsClient client = new CommentsClient()
-        def comments = client.getComments("http://ladies-il.livejournal.com/5185260.html")
+        def comments = client.getComments("http://spamsink.livejournal.com/336909.html")
     }
 }
