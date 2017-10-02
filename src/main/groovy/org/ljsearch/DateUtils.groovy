@@ -36,7 +36,8 @@ class DateUtils {
         }
         for (DateFormat f : formats) {
             try {
-                return f.parse(s.replaceAll("сент","сен").replaceAll("[0-9]st|nd|rd|th", ""))
+                return f.parse(s.replaceAll("сент","сен").
+                        replaceAll("st|nd|rd|th", "").replaceAll("Augu","August"))
             }
             catch (Exception e) {
 
