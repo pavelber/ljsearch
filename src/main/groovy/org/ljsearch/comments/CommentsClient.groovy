@@ -100,7 +100,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                     break;
                 }
                 visited.add(url)
-                def aggregate = parseTree(doc)
+                def aggregate = parseTree(doc,posturl)
                 comments.putAll(aggregate.dic)
                 loaded.addAll(aggregate.links)
                 unloaded.addAll(aggregate.collapsed_links)
@@ -150,7 +150,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
         return new DomSerializer(props).createDOM(node);
     }
 
-    static def parseTree(Document doc) {
+    static def parseTree(Document doc,String posturl) {
         XPathFactory xPathfactory = XPathFactory.newInstance();
         XPath xpath = xPathfactory.newXPath();
 
@@ -180,16 +180,19 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
             for (f in fields) {
                 comment[f] = getStringElements(xpath, xp, f, block).join(" ").trim()
             }
-            Matcher m = pattern.matcher(comment['link'])
-            if (m.find()) {
-                def cid = m.group()
-                comments[cid] = comment
+            if (!comment.isEmpty()) {
+                Matcher m = pattern.matcher(comment['link'])
+                if (m.find()) {
+                    def cid = m.group()
+                    comments[cid] = comment
+                } else {
+                    throw new RuntimeException()
+                }
+
+                links.add(comment.link)
             } else {
-                throw new RuntimeException()
+                logger.warn("Empty comment at $posturl at ${comment.date}")
             }
-
-            links.add(comment.link)
-
 
         }
 
