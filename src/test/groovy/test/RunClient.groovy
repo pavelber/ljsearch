@@ -9,7 +9,7 @@ import org.ljsearch.comments.CommentsClient
 class RunClient {
      static void main(String[] args) {
         CommentsClient client = new CommentsClient()
-        def comments = client.getComments("https://gava.livejournal.com/28323.html")
+        def comments = client.getComments("https://komp-online-il.livejournal.com/2239792.html")
         comments.each { c -> println("${c.subject}  --- ${c.text}")}
     }
 }
