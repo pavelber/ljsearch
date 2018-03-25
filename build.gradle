@@ -1,11 +1,14 @@
+ext['tomcat.version'] = '7.0.52'
+
+
 group 'bernshtam'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'groovy'
 apply plugin: 'java'
-apply plugin: 'spring-boot'
-
+apply plugin: 'org.springframework.boot'
 apply plugin: 'war'
+
 
 war {
     baseName = 'ljsearch'
@@ -22,16 +25,16 @@ targetCompatibility = 1.8
 buildscript {
     repositories {
         mavenCentral()
+        maven { url "https://repo.spring.io/libs-milestone" }
     }
     dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE'
-
-        classpath 'mysql:mysql-connector-java:5.1.34'
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE")
     }
 }
 
 repositories {
     mavenCentral()
+    maven { url "https://repo.spring.io/libs-milestone" }
 }
 
 dependencies {
@@ -54,6 +57,7 @@ dependencies {
 
     compile 'org.jsoup:jsoup:1.8.3'
 
+    compile 'org.springframework.boot:spring-boot'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
     compile 'mysql:mysql-connector-java:5.1.31'
@@ -70,8 +74,6 @@ dependencies {
 
     compile 'com.code972.hebmorph:hebmorph-lucene:2.0.3'
 
-
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
 
     testCompile 'org.springframework:spring-test'
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
