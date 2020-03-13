@@ -96,10 +96,10 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
     static def pattern = Pattern.compile('.*([0-9]+)$')
 
     @Override
-    Collection<Comment> getComments(final String posturl, int markupIndex = -1) {
+    Collection<Comment> getComments(final String posturl ) {
 
         Map<String, Comment> comments = [:]
-
+        int markupIndex = -1
         def visited = new HashSet<>()
         def loaded = new HashSet<>()
         def unloaded = new Stack<String>()
@@ -173,10 +173,10 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
 
         def xp 
         def myNodes
-        if(markup_index > -1) {
+        if(markupIndex > -1) {
             xp = markups[markupIndex];
         } else {
-            markup.eachWithIndex { k, i ->
+            markup_guess.eachWithIndex { k, i ->
                 XPathExpression expr = xpath.compile(k);
                 myNodes = expr.evaluate(doc, XPathConstants.NODESET);
                 if (myNodes.length > 0) {
