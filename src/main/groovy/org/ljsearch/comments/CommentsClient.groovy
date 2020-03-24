@@ -38,9 +38,9 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
     [
         'blocks' : '//div[contains(concat(" ",@class," ")," comment ")'+
                 'and not(contains(concat(" ",@class," ")," b-leaf-collapsed "))]',
-        'link' : './/a[@class="b-leaf-permalink"]/attribute::href', 
-        'date' : './/span[@class="b-leaf-createdtime"]/text()', 
-        'text' : './/div[@class="b-leaf-article"]//text()', 
+        'link' : './/a[@class="b-leaf-permalink"]/attribute::href',
+        'date' : './/span[@class="b-leaf-createdtime"]/text()',
+        'text' : './/div[@class="b-leaf-article"]//text()',
         'user' : './/span[@class="b-leaf-username-name"]//text()',
         'subject' : './/h4[@class="b-leaf-subject"]//text()',
         "collapsed" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]"+
@@ -114,7 +114,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                 try {
                     doc = treeFromUrl(url)
                 } catch (Exception w) {
-                    break;
+                    break
                 }
                 visited.add(url)
                 def aggregate = parseTree(doc, posturl, markupIndex)
@@ -147,38 +147,35 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
             url = url[0..url.indexOf("?")] + "nojs=1&" + url[url.indexOf("?") + 1..url.length() - 1]
         }
 
-        HtmlCleaner cleaner = new HtmlCleaner();
+        HtmlCleaner cleaner = new HtmlCleaner()
 
-        CleanerProperties props = cleaner.getProperties();
+        CleanerProperties props = cleaner.getProperties()
 
-        props.setTranslateSpecialEntities(true);
-        props.setTransResCharsToNCR(true);
-        props.setOmitComments(true);
-        props.setAllowHtmlInsideAttributes(true);
-        props.setAllowMultiWordAttributes(true);
-        props.setRecognizeUnicodeChars(true);
+        props.setTranslateSpecialEntities(true)
+        props.setTransResCharsToNCR(true)
+        props.setOmitComments(true)
+        props.setAllowHtmlInsideAttributes(true)
+        props.setAllowMultiWordAttributes(true)
+        props.setRecognizeUnicodeChars(true)
 
-        TagNode node = cleaner.clean(new URL(url));
+        TagNode node = cleaner.clean(new URL(url))
         //assert page.status_code == 200
         //assert "<title>LiveJournal Bot Policy</title>" not in page.text
-        String str = new SimpleXmlSerializer(cleaner.getProperties()).getXmlAsString(node, "UTF-8");
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        return new DomSerializer(props).createDOM(node);
+        return new DomSerializer(props).createDOM(node)
     }
 
     static def parseTree(Document doc, String posturl, int markupIndex = -1) {
-        XPathFactory xPathfactory = XPathFactory.newInstance();
-        XPath xpath = xPathfactory.newXPath();
+        XPathFactory xPathfactory = XPathFactory.newInstance()
+        XPath xpath = xPathfactory.newXPath()
 
-        def xp 
+        def xp
         def myNodes
         if(markupIndex > -1) {
             xp = markups[markupIndex];
         } else {
             markup_guess.eachWithIndex { k, i ->
-                XPathExpression expr = xpath.compile(k);
-                myNodes = expr.evaluate(doc, XPathConstants.NODESET);
+                XPathExpression expr = xpath.compile(k)
+                myNodes = expr.evaluate(doc, XPathConstants.NODESET)
                 if (myNodes.length > 0) {
                     xp = markups[i]
                 }
@@ -203,7 +200,7 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                 comment[f] = getStringElements(xpath, xp, f, block).join(" ").trim()
             }
             if (!comment.isEmpty()) {
-                Matcher m = pattern.matcher(comment['link'])
+                Matcher m = pattern.matcher(comment.link)
                 if (m.find()) {
                     def cid = m.group()
                     comments[cid] = comment
