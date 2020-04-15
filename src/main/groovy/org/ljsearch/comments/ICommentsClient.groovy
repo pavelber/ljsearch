@@ -6,5 +6,5 @@ package org.ljsearch.comments
  */
 interface ICommentsClient {
 
-    Collection<Comment> getComments(String postUrl)
+    Collection<Comment> getComments(String postUrl )
 }

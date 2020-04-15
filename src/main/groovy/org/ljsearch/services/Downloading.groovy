@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import org.ljsearch.DateUtils
 import org.ljsearch.IndexedType
 import org.ljsearch.comments.Comment
+import org.ljsearch.comments.CommentsClient
 import org.ljsearch.comments.ICommentsClient
 import org.ljsearch.entity.IJournalRepository
 import org.ljsearch.entity.Journal
@@ -50,7 +51,7 @@ class Downloading implements IDownloading {
         while (true) {
             LocalDate maxDate = (journal.last ? DateUtils.fromDate(journal.last) : DateUtils.START_DATE).plus(1, ChronoUnit.DAYS);
             if (maxDate.isAfter(LocalDate.now().minusDays(2))) {
-                break;
+                break
             }
             GetEventsArgument argument = createArgument(journal, maxDate)
             try {
@@ -59,21 +60,17 @@ class Downloading implements IDownloading {
 
                 syncResult.each { BlogEntry it ->
                     indexer.add(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date, IndexedType.Post)
-                    def comments
+                    def comments = [] as List<Comment>
                     try {
                         logger.info(it.permalink)
-                        comments = commentsClient.getComments(it.permalink)
-                    } catch (FileNotFoundException e) {
-                        comments = null
+                        comments =  commentsClient.getComments(it.permalink)
                     } catch (IOException e) {
                         logger.info("Got {}, going to sleep...", e.getCause())
                         Thread.sleep(DateUtils.DELAY)
                     }
-                    if (comments != null) {
-                        comments.each { Comment comment ->
-                            if (comment.text != null)
-                                indexer.add("", comment.text, journal.journal, comment.user, comment.link, comment.date, IndexedType.Comment)
-                        }
+                    comments.each { Comment comment ->
+                        if (comment.text != null)
+                            indexer.add("", comment.text, journal.journal, comment.user, comment.link, comment.date, IndexedType.Comment)
                     }
                 }
                 indexer.commit()

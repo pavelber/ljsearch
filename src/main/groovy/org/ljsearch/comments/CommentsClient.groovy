@@ -1,14 +1,15 @@
 package org.ljsearch.comments
 
 import org.apache.commons.collections.IteratorUtils
-import org.htmlcleaner.*
+import org.htmlcleaner.CleanerProperties
+import org.htmlcleaner.DomSerializer
+import org.htmlcleaner.HtmlCleaner
+import org.htmlcleaner.TagNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 
-import javax.xml.parsers.DocumentBuilder
-import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathExpression
@@ -20,89 +21,117 @@ import java.util.regex.Pattern
  * Created by Pavel on 11/6/2015.
  */
 @Service
-class CommentsClient implements org.ljsearch.comments.ICommentsClient {
+class CommentsClient implements ICommentsClient {
 
     private static Logger logger = LoggerFactory.getLogger(CommentsClient.class)
 
 
     def static markups = [
-    [
-        'blocks' : '//div[contains(concat(" ",@class," ")," comment ")]',
-        "link" : ".//a[@class='permalink']/attribute::href",
-        "date" : ".//abbr/span/text()",
-        "text" : ".//div[contains(concat(' ',@class,' '),' comment-body ')]//text()",
-        "user" : ".//span[@class='commenter-name']/span/attribute::data-ljuser",
-        "subject" : ".//div[@class='comment-subject']/text()",
-        "collapsed" : "//a[@class='collapsed-comment-link']/attribute::href",
-    ],
-    [
-        'blocks' : '//div[contains(concat(" ",@class," ")," comment ")'+
-                'and not(contains(concat(" ",@class," ")," b-leaf-collapsed "))]',
-        'link' : './/a[@class="b-leaf-permalink"]/attribute::href',
-        'date' : './/span[@class="b-leaf-createdtime"]/text()',
-        'text' : './/div[@class="b-leaf-article"]//text()',
-        'user' : './/span[@class="b-leaf-username-name"]//text()',
-        'subject' : './/h4[@class="b-leaf-subject"]//text()',
-        "collapsed" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]"+
-            "/div/div/div[2]/ul/li[2]/a/attribute::href",
-        "to_visit": "//span[@class='b-leaf-seemore-more']/a/attribute::href",
-    ],
-    [
-        "blocks": "//div[@class='ljcmt_full']",
-        "link" : ".//td[@class='social-links']/p/strong/a/attribute::href",
-        "date" : ".//small/span/text()",
-        "text": "./div[2]//text()",
-        "user" : ".//td/span/a/b/text()",
-        "subject" : ".//td/h3/text()",
-        "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
-    ],
-    [
-        "blocks": '//div[starts-with(@id, "ljcmt")]',
-        "link" : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
-        "date" : ".//tr/td/span/text()",
-        "text": "./div[2]//text()",
-        "user" : ".//td/span/a/b/text()",
-        "subject" : ".//td/h3/text()",
-        "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
-    ],
-    [
-        "blocks": "//div[@class='ljcmt_full']",
-        "link" : ".//div[@class='commentLinkbar']/ul/li[last()-1]/a/attribute::href",
-        "date" : ".//div[@class='commentHeader']/span[1]/text()",
-        "text": ".//div[contains(concat(' ',@class,' '),' commentText ')]//text()",
-        "user" : ".//span[@class='ljuser']/span/attribute::data-ljuser",
-        "subject" : ".//span[@class='commentHeaderSubject']/text()",
-        "collapsed" : "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
-    ],
-    [
-        "blocks": '//div[starts-with(@id, "ljcmt")]',
-        "link" : ".//span[@class='comment-datetimelink']/a[last()]/attribute::href",
-        "date" : ".//span[@class='comment-datetimelink']/a/span/text()",
-        "text": "./div[2]//text()",
-        "user" : ".//div[@class='comment-poster-info']/span/attribute::data-ljuser",
-        "subject" : ".//div[contains(concat(' ',@class,' '),' comment-head-in ')]/h3/text()",
-        "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
-    ]]
+            [
+                    'blocks'   : '//div[contains(concat(" ",@class," ")," comment ")]',
+                    "link"     : ".//a[@class='permalink']/attribute::href",
+                    "date"     : ".//abbr/span/text()",
+                    "text"     : ".//div[contains(concat(' ',@class,' '),' comment-body ')]//text()",
+                    "user"     : ".//span[@class='commenter-name']/span/attribute::data-ljuser",
+                    "subject"  : ".//div[@class='comment-subject']/text()",
+                    "collapsed": "//a[@class='collapsed-comment-link']/attribute::href",
+            ],
+            [
+                    'blocks'   : '//div[contains(concat(" ",@class," ")," comment ")' +
+                            'and not(contains(concat(" ",@class," ")," b-leaf-collapsed "))]',
+                    'link'     : './/a[@class="b-leaf-permalink"]/attribute::href',
+                    'date'     : './/span[@class="b-leaf-createdtime"]/text()',
+                    'text'     : './/div[@class="b-leaf-article"]//text()',
+                    'user'     : './/span[@class="b-leaf-username-name"]//text()',
+                    'subject'  : './/h4[@class="b-leaf-subject"]//text()',
+                    "collapsed": "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]" +
+                            "/div/div/div[2]/ul/li[2]/a/attribute::href",
+                    "to_visit" : "//span[@class='b-leaf-seemore-more']/a/attribute::href",
+            ],
+            [
+                    "blocks"   : "//div[@class='ljcmt_full']",
+                    "link"     : ".//td[@class='social-links']/p/strong/a/attribute::href",
+                    "date"     : ".//small/span/text()",
+                    "text"     : "./div[2]//text()",
+                    "user"     : ".//td/span/a/b/text()",
+                    "subject"  : ".//td/h3/text()",
+                    "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
+            ],
+            [
+                    "blocks"   : '//div[starts-with(@id, "ljcmt")]',
+                    "link"     : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
+                    "date"     : ".//tr/td/span/text()",
+                    "text"     : "./div[2]//text()",
+                    "user"     : ".//td/span/a/b/text()",
+                    "subject"  : ".//td/h3/text()",
+                    "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
+            ],
+            [
+                    "blocks"   : "//div[@class='ljcmt_full']",
+                    "link"     : ".//div[@class='commentLinkbar']/ul/li[last()-1]/a/attribute::href",
+                    "date"     : ".//div[@class='commentHeader']/span[1]/text()",
+                    "text"     : ".//div[contains(concat(' ',@class,' '),' commentText ')]//text()",
+                    "user"     : ".//span[@class='ljuser']/span/attribute::data-ljuser",
+                    "subject"  : ".//span[@class='commentHeaderSubject']/text()",
+                    "collapsed": "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
+            ],
+            [
+                    "blocks"   : '//div[starts-with(@id, "ljcmt")]',
+                    "link"     : ".//span[@class='comment-datetimelink']/a[last()]/attribute::href",
+                    "date"     : ".//span[@class='comment-datetimelink']/a/span/text()",
+                    "text"     : "./div[2]//text()",
+                    "user"     : ".//div[@class='comment-poster-info']/span/attribute::data-ljuser",
+                    "subject"  : ".//div[contains(concat(' ',@class,' '),' comment-head-in ')]/h3/text()",
+                    "collapsed": "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
+            ]]
 
     def static markup_guess = [
-        "//div[@id='container']",
-        "//html[@class='html-schemius html-adaptive']",
-        "//div[@align='center']/table[@id='topbox']",
-        "//table[contains(@class, 'standard')]",
-        "//div[@class='bodyblock']",
-        "//html[contains(@class, 'html-s2-no-adaptive')]",
+            "//div[@id='container']",
+            "//html[@class='html-schemius html-adaptive']",
+            "//div[@align='center']/table[@id='topbox']",
+            "//table[contains(@class, 'standard')]",
+            "//div[@class='bodyblock']",
+            "//html[contains(@class, 'html-s2-no-adaptive')]",
     ]
 
     static def pattern = Pattern.compile('.*([0-9]+)$')
 
+    def markupCache = [:] as Map<String, Integer>
+
+    static def getLJUrl(String url) {
+        int index = url.lastIndexOf('/')
+        return url.substring(0,index)
+    }
+
+
     @Override
-    Collection<Comment> getComments(final String posturl ) {
+    Collection<Comment> getComments(String postUrl) {
+        def comments = [] as List<Comment>
+        def ljUrl = getLJUrl(postUrl)
+
+        Integer cached = markupCache[ljUrl]
+        if (cached != null) {
+            comments = getComments(postUrl, cached)
+        } else {
+
+            for (int i = 0; i < CommentsClient.markups.size(); i++) {
+
+                def tempComments = getComments(postUrl, i)
+                if (tempComments != null && (comments == null || tempComments.size() > comments.size())) {
+                    comments = tempComments
+                    markupCache[ljUrl] = i
+                }
+            }
+        }
+        return comments
+    }
+
+    static Collection<Comment> getComments(final String posturl, int markupIndex) {
 
         Map<String, Comment> comments = [:]
-        int markupIndex = -1
         def visited = new HashSet<>()
         def loaded = new HashSet<>()
-        def unloaded = new Stack<String>()
+        Stack<String> unloaded = new Stack<String>()
         unloaded.push(posturl)
         int c_len_old = 0
         int page = 2
@@ -117,7 +146,8 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                     break
                 }
                 visited.add(url)
-                def aggregate = parseTree(doc, posturl, markupIndex)
+                def aggregate = parseTree(doc, posturl, markupIndex)// Try another markup
+                if (aggregate == null) return null
                 comments.putAll(aggregate.dic)
                 loaded.addAll(aggregate.links)
                 unloaded.addAll(aggregate.collapsed_links)
@@ -165,13 +195,16 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
     }
 
     static def parseTree(Document doc, String posturl, int markupIndex = -1) {
+
+        if (markupIndex > markups.size())
+            throw new RuntimeException()
         XPathFactory xPathfactory = XPathFactory.newInstance()
         XPath xpath = xPathfactory.newXPath()
 
         def xp
         def myNodes
-        if(markupIndex > -1) {
-            xp = markups[markupIndex];
+        if (markupIndex > -1) {
+            xp = markups[markupIndex]
         } else {
             markup_guess.eachWithIndex { k, i ->
                 XPathExpression expr = xpath.compile(k)
@@ -186,8 +219,8 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
         def comments = [:]
         def links = []
         if (xp == null) {
-            logger.warn("null block on!");
-            return new ParsingResult(dic: [:], links: [], collapsed_links: [])
+            //logger.warn("null block on!")
+            return null // Try another markup
         }
         def blocks = getElements(xpath, xp, "blocks", doc)
         def collapsed = getStringElements(xpath, xp, 'collapsed', doc)
@@ -205,12 +238,13 @@ class CommentsClient implements org.ljsearch.comments.ICommentsClient {
                     def cid = m.group()
                     comments[cid] = comment
                 } else {
-                    throw new RuntimeException()
+                    return null// Try another markup
                 }
 
                 links.add(comment.link)
             } else {
-                logger.warn("Empty comment at $posturl at ${comment.date}")
+                // logger.warn("Empty comment at $posturl at ${comment.date}")
+                return null // Try another markup
             }
 
         }
