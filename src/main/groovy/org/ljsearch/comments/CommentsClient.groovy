@@ -96,33 +96,20 @@ class CommentsClient implements ICommentsClient {
 
     static def pattern = Pattern.compile('.*([0-9]+)$')
 
-    def markupCache = [:] as Map<String, Integer>
-
-    static def getLJUrl(String url) {
-        int index = url.lastIndexOf('/')
-        return url.substring(0,index)
-    }
-
 
     @Override
     Collection<Comment> getComments(String postUrl) {
         def comments = [] as List<Comment>
-        def ljUrl = getLJUrl(postUrl)
+        for (int i = 0; i < CommentsClient.markups.size(); i++) {
 
-        Integer cached = markupCache[ljUrl]
-        if (cached != null) {
-            comments = getComments(postUrl, cached)
-        } else {
-
-            for (int i = 0; i < CommentsClient.markups.size(); i++) {
-
-                def tempComments = getComments(postUrl, i)
-                if (tempComments != null && (comments == null || tempComments.size() > comments.size())) {
-                    comments = tempComments
-                    markupCache[ljUrl] = i
-                }
+            def tempComments = getComments(postUrl, i)
+            if (tempComments != null && tempComments.size() > comments.size()) {
+                comments = tempComments
             }
         }
+
+        logger.info(postUrl + " - " + comments.size() + " comments")
+
         return comments
     }
 
