@@ -12,27 +12,27 @@ import java.util.Date;
 @Ignore
 public class ConvenientClientTest extends TestCase {
     ConvenientClient ljConvenientClient;
-    private static final String LOGIN = "ljapi";
-    private static final String PASSWORD = "secret1";
+    private static final String LOGIN = "potrebi";
+    private static final String PASSWORD = "";
     private Calendar calendar;
 
 
     protected void setUp() throws Exception {
-        System.getProperties().put("proxySet", "true");
-        System.getProperties().put("proxyPort", "8888");
-        System.getProperties().put("proxyHost", "localhost");
+        //System.getProperties().put("proxySet", "true");
+        //System.getProperties().put("proxyPort", "8888");
+        //System.getProperties().put("proxyHost", "localhost");
         super.setUp();
         ljConvenientClient = ClientsFactory.getLJConvenientClient();
         calendar = Calendar.getInstance();
-        calendar.set(Calendar.YEAR, 2006);
-        calendar.set(Calendar.MONTH, Calendar.JANUARY);
-        calendar.set(Calendar.DAY_OF_MONTH, 2);
+        calendar.set(Calendar.YEAR, 2022);
+        calendar.set(Calendar.MONTH, Calendar.OCTOBER);
+        calendar.set(Calendar.DAY_OF_MONTH, 12);
         ljConvenientClient.login(LOGIN, PASSWORD, 0);
     }
 
 
     public void testGetBlogEntriesOn() throws Exception {
-        BlogEntry[] blogEntriesOn = ljConvenientClient.getBlogEntriesOn(calendar.getTime(),null, 0);
+        BlogEntry[] blogEntriesOn = ljConvenientClient.getBlogEntriesOn(calendar.getTime(),"bambik", 0);
         assertEquals(6, blogEntriesOn.length);
     }
 

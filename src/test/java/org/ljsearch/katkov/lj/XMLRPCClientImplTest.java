@@ -12,22 +12,20 @@ import org.ljsearch.katkov.lj.xmlrpc.results.*;
  * That class is not real UnitTest calss as there are no assert statemnet
  * It mere serves as a test client
  */
-@Ignore
 public class XMLRPCClientImplTest extends TestCase {
     XMLRPCClient ljClient;
-    private static final String LOGIN = "ljapi";
-    private static final String PASSWORD = "secret1";
+    private static final String LOGIN = "potrebi";
+    private static final String PASSWORD = "";
 
 
     protected void setUp() throws Exception {
         super.setUp();
         ljClient = new XMLRPCClientImpl();
-        System.getProperties().put("proxySet", "true");
-        System.getProperties().put("proxyPort", "8888");
-        System.getProperties().put("proxyHost", "localhost");
+
 
     }
 
+    @Ignore
     public void testCheckfriends() throws Exception {
         CheckFriendsArgument argument = new CheckFriendsArgument();
         argument.setUsername(LOGIN);
@@ -36,6 +34,7 @@ public class XMLRPCClientImplTest extends TestCase {
         System.out.println("checkResult = " + checkResult);
     }
 
+    @Ignore
     public void testConsolecommand() throws Exception {
         ConsoleCommandArgument argument = new ConsoleCommandArgument();
         argument.setUsername(LOGIN);
@@ -46,6 +45,7 @@ public class XMLRPCClientImplTest extends TestCase {
 
     }
 
+    @Ignore
     public void testEditevent() throws Exception {
         EditEventArgument argument = new EditEventArgument();
         argument.setUsername(LOGIN);
@@ -61,11 +61,17 @@ public class XMLRPCClientImplTest extends TestCase {
         GetEventsArgument argument = new GetEventsArgument();
         argument.setUsername(LOGIN);
         argument.setHpassword(PASSWORD);
-        argument.setSelecttype(GetEventsArgument.Type.LASTN);
+        argument.setSelecttype(GetEventsArgument.Type.DAY);
+        argument.setHowmany(1000);
+        argument.setYear(2022);
+        argument.setMonth(10);
+        argument.setDay(12);
+        argument.setUsejournal("bambik");
         BlogEntry[] list = ljClient.getevents(argument, 0);
         System.out.println("list = " + Arrays.asList(list));
     }
 
+    @Ignore
     public void testLogin() throws Exception {
         LoginArgument argument = new LoginArgument();
         argument.setUsername(LOGIN);
@@ -74,6 +80,7 @@ public class XMLRPCClientImplTest extends TestCase {
         System.out.println("userData = " + userData);
     }
 
+    @Ignore
     public void testGetdaycounts() throws Exception {
         GetDayCountsArgument argument = new GetDayCountsArgument();
         argument.setUsername(LOGIN);
@@ -83,6 +90,7 @@ public class XMLRPCClientImplTest extends TestCase {
 
     }
 
+    @Ignore
     public void testGetfriends() throws Exception {
         GetFriendsArgument argument = new GetFriendsArgument();
         argument.setUsername(LOGIN);
@@ -93,6 +101,7 @@ public class XMLRPCClientImplTest extends TestCase {
         System.out.println("friendsResult = " + friendsResult);
     }
 
+    @Ignore
     public void testGetfriendgroups() throws Exception {
         BaseArgument argument = new BaseArgument();
         argument.setUsername(LOGIN);
@@ -102,6 +111,7 @@ public class XMLRPCClientImplTest extends TestCase {
 
     }
 
+    @Ignore
     public void testPostevent() throws Exception {
         PostEventArgument argument = new PostEventArgument();
         argument.setUsername(LOGIN);
@@ -118,6 +128,7 @@ public class XMLRPCClientImplTest extends TestCase {
 
     }
 
+    @Ignore
     public void testSessiongenerate() throws Exception {
         SessionGenerateArgument argument = new SessionGenerateArgument();
         argument.setUsername(LOGIN);
@@ -126,6 +137,7 @@ public class XMLRPCClientImplTest extends TestCase {
         System.out.println("session = " + session);
     }
 
+    @Ignore
     public void testSessionexpire() throws Exception {
         SessionExpireArgument argument = new SessionExpireArgument();
         argument.setUsername(LOGIN);
@@ -134,6 +146,7 @@ public class XMLRPCClientImplTest extends TestCase {
         ljClient.sessionexpire(argument, 0);
     }
 
+    @Ignore
     public void testSyncitems() throws Exception {
         SyncItemsArgument argument = new SyncItemsArgument();
         argument.setUsername(LOGIN);
@@ -142,6 +155,7 @@ public class XMLRPCClientImplTest extends TestCase {
         System.out.println("syncResult = " + syncResult);
     }
 
+    @Ignore
     public void testEditfriends() throws Exception {
         EditFriendsArgument argument = new EditFriendsArgument();
         argument.setUsername(LOGIN);
@@ -156,6 +170,7 @@ public class XMLRPCClientImplTest extends TestCase {
         ljClient.editfriends(argument, 0);
     }
 
+    @Ignore
     public void testFriendof() throws Exception {
         GetFriendOfArgument argument = new GetFriendOfArgument();
         argument.setUsername(LOGIN);
@@ -164,11 +179,13 @@ public class XMLRPCClientImplTest extends TestCase {
         System.out.println("friends = " + Arrays.asList(friends));
     }
 
+    @Ignore
     public void testGetchallenge() throws Exception {
         Challenge challenge = ljClient.getchallenge(0);
         System.out.println("challenge = " + challenge);
     }
 
+    @Ignore
     public void testEditfriendgroups() throws Exception {
         EditFriendGroupsArgument argument = new EditFriendGroupsArgument();
         argument.setUsername(LOGIN);

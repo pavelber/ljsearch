@@ -46,7 +46,6 @@ class Downloading implements IDownloading {
 
 
     @Override
-    @Async
     void download(Journal journal) {
         while (true) {
             LocalDate maxDate = (journal.last ? DateUtils.fromDate(journal.last) : DateUtils.START_DATE).plus(1, ChronoUnit.DAYS);
@@ -79,6 +78,7 @@ class Downloading implements IDownloading {
             } catch (LJRuntimeException e) {
                 logger.error("Exception going to sleep...", e)
                 Thread.sleep(DateUtils.DELAY)
+                break
             }
 
         }
