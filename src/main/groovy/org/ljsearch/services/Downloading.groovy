@@ -56,7 +56,7 @@ class Downloading implements IDownloading {
             try {
                 BlogEntry[] syncResult = ljClient.getevents(argument, 0);
                 logger.info("{} : Got {} entries from {}", journal.journal, syncResult.length, maxDate);
-
+                Thread.sleep(DateUtils.SMALL_DELAY)
                 syncResult.each { BlogEntry it ->
                     indexer.add(it.subject, it.body, journal.journal, it.poster, it.permalink, it.date, IndexedType.Post)
                     def comments = [] as List<Comment>
