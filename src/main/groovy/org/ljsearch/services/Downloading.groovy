@@ -63,6 +63,7 @@ class Downloading implements IDownloading {
                     try {
                         logger.info(it.permalink)
                         comments =  commentsClient.getComments(it.permalink)
+                        Thread.sleep(DateUtils.SMALL_DELAY)
                     } catch (IOException e) {
                         logger.info("Got {}, going to sleep...", e.getCause())
                         Thread.sleep(DateUtils.DELAY)

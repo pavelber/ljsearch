@@ -25,6 +25,7 @@ class DateUtils {
 
     public static final LocalDate START_DATE = LocalDate.of(2001, 1, 1)
     public static final int DELAY = 20 * 60 * 1000
+    public static final int SMALL_DELAY = 1 * 60 * 1000
 
     static Date parseDate(String s) {
         for (DateFormat f : formats) {
