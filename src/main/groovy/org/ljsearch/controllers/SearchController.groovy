@@ -33,6 +33,9 @@ class SearchController {
         poster = (poster == 'null' || poster == 'undefined') ? "" : poster
         Integer year = (yearStr == 'null' || yearStr == "" || yearStr == null || yearStr == 'undefined'|| yearStr == 'NaN') ? null : Integer.parseInt(yearStr)
         Date from = null, to = null
+
+
+
         if (year != null) {
             from = new GregorianCalendar(year, Calendar.JANUARY, 1).time
             to = new GregorianCalendar(year + 1, Calendar.JANUARY, 1).time

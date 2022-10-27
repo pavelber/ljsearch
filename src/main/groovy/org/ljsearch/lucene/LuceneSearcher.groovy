@@ -2,6 +2,7 @@ package org.ljsearch.lucene
 
 import groovy.transform.CompileStatic
 import org.apache.commons.lang3.StringUtils
+import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.DateTools
 import org.apache.lucene.document.Document
@@ -23,6 +24,8 @@ import java.util.stream.Collectors
 @PropertySource("classpath:ljsearch.properties")
 @CompileStatic
 class LuceneSearcher implements ISearcher {
+
+    private static final Logger logger = Logger.getLogger(LuceneSearcher.class.getName());
 
     @Autowired
     QueryCreator queryCreator
@@ -46,6 +49,8 @@ class LuceneSearcher implements ISearcher {
     @Override
     List<Post> search(String journal, String poster, String text, Date from, Date to, IndexedType type) {
 
+        logger.info("Searching for " + text)
+
         synchronized (this) {//todo bad
             if (mgr == null) {
                 init()
@@ -58,7 +63,7 @@ class LuceneSearcher implements ISearcher {
         if (!StringUtils.isEmpty(journal) ||
                 !StringUtils.isEmpty(poster) ||
                 !StringUtils.isEmpty(text) ||
-                type!=null ||
+                type != null ||
                 from != null || to != null
         ) {
             try {
