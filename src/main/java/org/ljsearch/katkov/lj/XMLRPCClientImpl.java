@@ -54,7 +54,7 @@ public class XMLRPCClientImpl implements XMLRPCClient {
     private static Logger logger = LoggerFactory.getLogger(XMLRPCClientImpl.class);
 
     private XmlRpcClient client;
-    private static String HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC = "http://www.livejournal.com/interface/xmlrpc";
+    private static String HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC = "https://www.livejournal.com/interface/xmlrpc";
 
 
     XMLRPCClientImpl() {
