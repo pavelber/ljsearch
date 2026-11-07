@@ -2,11 +2,13 @@
 # pylint: disable=unused-argument
 # This program is dedicated to the public domain under the CC0 license.
 
+import html
 import json
 import logging
 import os
 import re
-import urllib
+import time
+import urllib.parse
 
 import aiohttp
 from telegram import ForceReply, Update
@@ -21,6 +23,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 journals_list = None
+journals_loaded_at = 0.0
+# The list of journals changes on the server; reload it from time to time.
+JOURNALS_TTL_SECONDS = 60 * 60
+HTTP_TIMEOUT = aiohttp.ClientTimeout(total=30)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -45,7 +51,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def get_journals_list():
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=HTTP_TIMEOUT) as session:
         async with session.get('https://getlj.com/journals') as response:
             if response.status == 200:
                 text = await response.text()
@@ -59,19 +65,27 @@ async def get_journals_list():
                 return []
 
 
+async def ensure_journals_list():
+    global journals_list, journals_loaded_at
+    if not journals_list or time.time() - journals_loaded_at > JOURNALS_TTL_SECONDS:
+        fresh = await get_journals_list()
+        if fresh:
+            journals_list = fresh
+            journals_loaded_at = time.time()
+        elif journals_list is None:
+            journals_list = []
+    return journals_list
+
+
 async def journals(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    global journals_list
-    if not journals_list:
-        journals_list = await get_journals_list()
+    journals_list = await ensure_journals_list()
     journal_text = "\n".join(journals_list)
     await update.message.reply_text(f"Available journals:\n{journal_text}")
     await help_command(update, context)
 
 
 async def search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    global journals_list
-    if not journals_list:
-        journals_list = await get_journals_list()
+    journals_list = await ensure_journals_list()
     text = update.message.text
     parts = text.split(" ", 2)
 
@@ -101,7 +115,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query_params = {k: v for k, v in query_params.items() if v is not None}
     url = f"{base_url}?{urllib.parse.urlencode(query_params)}"
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=HTTP_TIMEOUT) as session:
         async with session.get(url) as response:
             if response.status == 200:
                 # try:
@@ -116,7 +130,9 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 for item in data:
                     text = item.get('text', 'No text available').replace("<mark>", "").replace("</mark>", "")
                     url = item.get('url', '#')
-                    text = f"<a href='{url}'>{text[:100]}...</a>"
+                    # The reply is sent as HTML: escape the post text and the
+                    # link, otherwise a '<' or '&' in a post breaks the message.
+                    text = f"<a href='{html.escape(url, quote=True)}'>{html.escape(text[:100])}...</a>"
                     result_messages.append(text)
                     size += len(text)
                     if size > 3500:

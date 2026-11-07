@@ -72,11 +72,12 @@ public class LuceneIndexer implements IIndexer {
     @Override
     public void add(String title, String html, String journal, String poster, String url, final Date date, IndexedType type) {
 
-        String content = Jsoup.parse(html).text();
+        // LJ returns posts without a body (e.g. image-only or deleted text)
+        String content = html == null ? "" : Jsoup.parse(html).text();
 
         Document doc = new Document();
 
-        String value = DateHelper.toString(date);
+        String value = DateHelper.toString(date == null ? new Date() : date);
         doc.add(new TextField(LuceneBinding.DATE_FIELD,
                 value,
                 Field.Store.YES));
@@ -87,7 +88,7 @@ public class LuceneIndexer implements IIndexer {
         addField(type.name(), doc, LuceneBinding.TYPE_FIELD);
         addField(poster, doc, LuceneBinding.POSTER_FIELD);
         addTextField(title, doc, LuceneBinding.TITLE_FIELD, LuceneBinding.RUS_TITLE_FIELD, LuceneBinding.ENG_TITLE_FIELD);
-        addTextField(content, doc, LuceneBinding.CONTENT_FIELD, LuceneBinding.RUS_TITLE_FIELD, LuceneBinding.ENG_CONTENT_FIELD);
+        addTextField(content, doc, LuceneBinding.CONTENT_FIELD, LuceneBinding.RUS_CONTENT_FIELD, LuceneBinding.ENG_CONTENT_FIELD);
 
 
         try {

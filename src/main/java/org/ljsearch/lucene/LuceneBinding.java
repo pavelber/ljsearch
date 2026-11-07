@@ -40,7 +40,18 @@ public final class LuceneBinding {
 
 
 
+    /*
+     * Analyzers are thread safe and costly to build (the Russian and English
+     * ones load stop words and stemmers), so one instance is shared. Before,
+     * every search built a new one per query and per highlighted hit.
+     */
+    private static final Analyzer ANALYZER = createAnalyzer();
+
     public static Analyzer getAnalyzer() {
+        return ANALYZER;
+    }
+
+    private static Analyzer createAnalyzer() {
 
         Map<String, Analyzer> analyzers =
                 new HashMap<String, Analyzer>();

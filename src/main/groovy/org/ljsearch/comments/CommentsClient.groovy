@@ -97,12 +97,25 @@ class CommentsClient implements ICommentsClient {
     static def pattern = Pattern.compile('.*([0-9]+)$')
 
 
+    // Without these a stalled LiveJournal page blocks the single downloader
+    // thread forever (same failure as the getevents hang of 2026-09-20).
+    static final int CONNECT_TIMEOUT_MS = 30 * 1000
+    static final int READ_TIMEOUT_MS = 60 * 1000
+
+    // How many parsed pages of one post are kept while the markups are tried.
+    // Bounded because the JVM runs with -Xmx128m and a big thread can have
+    // dozens of pages.
+    static final int PAGE_CACHE_SIZE = 16
+
     @Override
     Collection<Comment> getComments(String postUrl) {
         def comments = [] as List<Comment>
+        // Every markup walks the same pages; share the downloads between them so
+        // that each page is requested from LiveJournal once, not once per markup.
+        PageCache cache = new PageCache()
         for (int i = 0; i < CommentsClient.markups.size(); i++) {
 
-            def tempComments = getComments(postUrl, i)
+            def tempComments = getComments(postUrl, i, cache)
             if (tempComments != null && tempComments.size() > comments.size()) {
                 comments = tempComments
             }
@@ -114,6 +127,10 @@ class CommentsClient implements ICommentsClient {
     }
 
     static Collection<Comment> getComments(final String posturl, int markupIndex) {
+        return getComments(posturl, markupIndex, new PageCache())
+    }
+
+    static Collection<Comment> getComments(final String posturl, int markupIndex, PageCache cache) {
 
         Map<String, Comment> comments = [:]
         def visited = new HashSet<>()
@@ -128,7 +145,7 @@ class CommentsClient implements ICommentsClient {
                 def url = unloaded.pop()
                 def doc
                 try {
-                    doc = treeFromUrl(url)
+                    doc = cache.get(url)
                 } catch (Exception w) {
                     break
                 }
@@ -175,10 +192,53 @@ class CommentsClient implements ICommentsClient {
         props.setAllowMultiWordAttributes(true)
         props.setRecognizeUnicodeChars(true)
 
-        TagNode node = cleaner.clean(new URL(url))
+        // Same single GET and charset as cleaner.clean(URL), plus timeouts.
+        URLConnection connection = new URL(url).openConnection()
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MS)
+        connection.setReadTimeout(READ_TIMEOUT_MS)
+        TagNode node
+        InputStream input = connection.getInputStream()
+        try {
+            node = cleaner.clean(input, props.getCharset())
+        } finally {
+            input.close()
+        }
         //assert page.status_code == 200
         //assert "<title>LiveJournal Bot Policy</title>" not in page.text
         return new DomSerializer(props).createDOM(node)
+    }
+
+    /**
+     * Parsed pages of one post, shared by all markups. A failed URL is
+     * remembered so that the other markups do not request it again.
+     */
+    static class PageCache {
+        private static final Logger log = LoggerFactory.getLogger(PageCache.class)
+        // insertion order: the oldest page is dropped first
+        private final LinkedHashMap<String, Document> pages = new LinkedHashMap<String, Document>()
+        private final Map<String, Exception> failed = new HashMap<String, Exception>()
+
+        Document get(String url) {
+            Exception previous = failed[url]
+            if (previous != null) {
+                throw previous
+            }
+            Document doc = pages[url]
+            if (doc == null) {
+                try {
+                    doc = treeFromUrl(url)
+                } catch (Exception e) {
+                    log.warn("Failed to load comments page {}: {}", url, e.toString())
+                    failed[url] = e
+                    throw e
+                }
+                pages[url] = doc
+                if (pages.size() > CommentsClient.PAGE_CACHE_SIZE) {
+                    pages.remove(pages.keySet().iterator().next())
+                }
+            }
+            return doc
+        }
     }
 
     static def parseTree(Document doc, String posturl, int markupIndex = -1) {

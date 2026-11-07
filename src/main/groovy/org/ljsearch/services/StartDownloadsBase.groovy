@@ -23,9 +23,18 @@ abstract class StartDownloadsBase implements Runnable {
         def journals = repo.findAll()
         IDownloading downloading = getDownloading()
         logger.info("Got {} journals", journals.size())
-        journals.each {
-            logger.info(" Starting download for {} ", it.journal)
-            downloading.download(it);
+        for (journal in journals) {
+            logger.info(" Starting download for {} ", journal.journal)
+            try {
+                downloading.download(journal);
+            } catch (InterruptedException e) {
+                // shutdown: stop the run, keep the flag for the scheduler
+                Thread.currentThread().interrupt()
+                return
+            } catch (Exception e) {
+                // one broken journal must not skip all the journals after it
+                logger.error("Download failed for " + journal.journal, e)
+            }
         }
     }
 

@@ -31,6 +31,7 @@ class LuceneSearcher implements ISearcher {
     QueryCreator queryCreator
 
     public static final int MAX_LENGTH_FIRST_LINE = 100
+    public static final int MAX_CHARS_TO_HIGHLIGHT = 50000
     @Value('${index.dir}')
     protected String indexDir
 
@@ -68,6 +69,10 @@ class LuceneSearcher implements ISearcher {
         ) {
             try {
                 Query q = queryCreator.generate(text, journal, poster, from, to, type)
+                // Highlight only the words the user typed: the full query also
+                // holds the OR over all public journals, the poster and the
+                // date range, whose terms used to get marked inside the text.
+                Query textQuery = StringUtils.isEmpty(text) ? null : queryCreator.generate(text)
                 SortField startField = new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true)
 
                 Sort sort = new Sort(startField)
@@ -82,7 +87,7 @@ class LuceneSearcher implements ISearcher {
                     def content = d.get(LuceneBinding.CONTENT_FIELD)
 
 
-                    String citation = createCitation(q, content)
+                    String citation = createCitation(textQuery, content ?: "")
                     results << new Post(
                             title: d.get(LuceneBinding.TITLE_FIELD) ?: "<no title>",
                             journal: d.get(LuceneBinding.JOURNAL_FIELD),
@@ -102,7 +107,7 @@ class LuceneSearcher implements ISearcher {
 
     private createCitation(Query q, String content) {
         String citation
-        def highlited = getHighlightedField(q, LuceneBinding.analyzer, LuceneBinding.CONTENT_FIELD, content)
+        def highlited = q == null ? null : getHighlightedField(q, LuceneBinding.getAnalyzer(), LuceneBinding.CONTENT_FIELD, content)
         if (highlited != null) {
             citation = highlited
         } else {
@@ -114,10 +119,13 @@ class LuceneSearcher implements ISearcher {
 
     private String getHighlightedField(Query query, Analyzer analyzer, String fieldName, String fieldValue) throws IOException, InvalidTokenOffsetsException {
         Formatter formatter = new SimpleHTMLFormatter("<mark>", "</mark>");
-        QueryScorer queryScorer = new QueryScorer(query);
+        QueryScorer queryScorer = new QueryScorer(query, fieldName);
         Highlighter highlighter = new Highlighter(formatter, queryScorer);
         highlighter.setTextFragmenter(new SimpleSpanFragmenter(queryScorer, 100));
-        highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
+        // Up to 400 hits are highlighted per search; analysing every text in
+        // full was the slowest part. A match beyond this limit falls back to
+        // the first line of the text.
+        highlighter.setMaxDocCharsToAnalyze(MAX_CHARS_TO_HIGHLIGHT);
         return highlighter.getBestFragment(analyzer, fieldName, fieldValue);
     }
 
