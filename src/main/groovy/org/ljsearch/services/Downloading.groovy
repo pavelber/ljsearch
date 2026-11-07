@@ -34,7 +34,7 @@ class Downloading implements IDownloading {
     // Skipping empty days via getdaycounts is off: on 2026-11-07 LJ answered
     // "Don't have access to requested journal" for the indexed journals
     // (read through usejournal), so it only added a failed LJ call per journal
-    // per run. Kept for journals where it may work; see KNOWN_ISSUES.md, item 10.
+    // per run. Kept for journals where it may work; see KNOWN_ISSUES.md, item 8.
     static final boolean USE_DAY_COUNTS = false
 
 
