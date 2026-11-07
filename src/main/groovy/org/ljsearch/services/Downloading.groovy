@@ -31,6 +31,12 @@ class Downloading implements IDownloading {
 
     private static Logger logger = LoggerFactory.getLogger(Downloading.class)
 
+    // Skipping empty days via getdaycounts is off: on 2026-11-07 LJ answered
+    // "Don't have access to requested journal" for the indexed journals
+    // (read through usejournal), so it only added a failed LJ call per journal
+    // per run. Kept for journals where it may work; see KNOWN_ISSUES.md, item 10.
+    static final boolean USE_DAY_COUNTS = false
+
 
     @Autowired
     XMLRPCClient ljClient
@@ -50,7 +56,7 @@ class Downloading implements IDownloading {
         LocalDate lastAllowed = LocalDate.now().minusDays(2)
         // Days that have posts, from one getdaycounts call. Empty days are then
         // skipped without a getevents request each. null = unknown, go day by day.
-        TreeSet<LocalDate> daysWithPosts = loadDaysWithPosts(journal)
+        TreeSet<LocalDate> daysWithPosts = USE_DAY_COUNTS ? loadDaysWithPosts(journal) : null
         while (true) {
             LocalDate maxDate = (journal.last ? DateUtils.fromDate(journal.last) : DateUtils.START_DATE).plus(1, ChronoUnit.DAYS);
             if (maxDate.isAfter(lastAllowed)) {
