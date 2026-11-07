@@ -56,11 +56,23 @@ public class XMLRPCClientImpl implements XMLRPCClient {
     private XmlRpcClient client;
     private static String HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC = "https://www.livejournal.com/interface/xmlrpc";
 
+    // Socket-level timeouts so a stalled LiveJournal reply cannot block the
+    // download thread forever. Without these, a single hung getevents call over
+    // the SOCKS tunnel wedges the single fixedRate downloader task permanently
+    // (observed 2026-09-20: the task stopped on journal "lenay" and never ran
+    // again until a JVM restart). On timeout the Sun HTTP transport throws
+    // SocketTimeoutException, which getevents() wraps in LJRuntimeException and
+    // Downloading catches per journal, so the loop and scheduler keep running.
+    private static final int CONNECT_TIMEOUT_MS = 30 * 1000;
+    private static final int REPLY_TIMEOUT_MS = 120 * 1000;
+
 
     XMLRPCClientImpl() {
         try {
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(new URL(HTTP_WWW_LIVEJOURNAL_COM_INTERFACE_XMLRPC));
+            config.setConnectionTimeout(CONNECT_TIMEOUT_MS);
+            config.setReplyTimeout(REPLY_TIMEOUT_MS);
             client = new XmlRpcClient();
             client.setConfig(config);
             client.setTypeFactory(new LJTypeFactory(client));
