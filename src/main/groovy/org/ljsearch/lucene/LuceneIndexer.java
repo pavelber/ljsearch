@@ -7,7 +7,9 @@ import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
@@ -74,27 +76,21 @@ public class LuceneIndexer implements IIndexer {
 
         // LJ returns posts without a body (e.g. image-only or deleted text)
         String content = html == null ? "" : Jsoup.parse(html).text();
-
-        Document doc = new Document();
-
         String value = DateHelper.toString(date == null ? new Date() : date);
-        doc.add(new TextField(LuceneBinding.DATE_FIELD,
-                value,
-                Field.Store.YES));
-        doc.add(new SortedDocValuesField(LuceneBinding.DATE_FIELD, new BytesRef(value)));
 
-        addField(url, doc, LuceneBinding.URL_FIELD);
-        addField(journal, doc, LuceneBinding.JOURNAL_FIELD);
-        addField(type.name(), doc, LuceneBinding.TYPE_FIELD);
-        addField(poster, doc, LuceneBinding.POSTER_FIELD);
-        addTextField(title, doc, LuceneBinding.TITLE_FIELD, LuceneBinding.RUS_TITLE_FIELD, LuceneBinding.ENG_TITLE_FIELD);
-        addTextField(content, doc, LuceneBinding.CONTENT_FIELD, LuceneBinding.RUS_CONTENT_FIELD, LuceneBinding.ENG_CONTENT_FIELD);
-
+        Document doc = buildDocument(value, url, journal, type.name(), poster, title, content);
 
         try {
             synchronized (LuceneIndexer.class) {
                 if (null != indexWriter) {
-                    indexWriter.addDocument(doc);
+                    Term id = idTerm(type.name(), journal, url);
+                    if (id != null) {
+                        // Replaces an earlier copy of the same post/comment, so
+                        // loading a day again does not create duplicates.
+                        indexWriter.updateDocument(id, doc);
+                    } else {
+                        indexWriter.addDocument(doc);
+                    }
                 }
             }
         } catch (IOException ex) {
@@ -105,31 +101,75 @@ public class LuceneIndexer implements IIndexer {
 
     }
 
+    /**
+     * Unique key of an indexed item: type, journal and URL. null when there is
+     * no URL. The journal is part of the key because the same comment can be
+     * loaded under two journals (a community and a member's journal), and
+     * each copy must stay findable under its own journal.
+     */
+    public static Term idTerm(String type, String journal, String url) {
+        return url == null ? null : new Term(LuceneBinding.ID_FIELD, idValue(type, journal, url));
+    }
+
+    public static String idValue(String type, String journal, String url) {
+        return type + ":" + journal + ":" + url;
+    }
+
+    /**
+     * Builds the Lucene document from the values that are stored in the index,
+     * so the same code serves new items and rebuilding the index from its own
+     * stored fields. date is already in DateHelper format; type is the
+     * IndexedType name.
+     *
+     * No term vectors: nothing reads them (the highlighter re-analyses the
+     * stored text), and they made up most of the index size.
+     */
+    public static Document buildDocument(String date, String url, String journal, String type,
+                                         String poster, String title, String content) {
+        Document doc = new Document();
+
+        doc.add(new TextField(LuceneBinding.DATE_FIELD,
+                date,
+                Field.Store.YES));
+        doc.add(new SortedDocValuesField(LuceneBinding.DATE_FIELD, new BytesRef(date)));
+
+        if (url != null) {
+            doc.add(new StringField(LuceneBinding.ID_FIELD, idValue(type, journal, url), Field.Store.NO));
+        }
+        addField(url, doc, LuceneBinding.URL_FIELD);
+        addField(journal, doc, LuceneBinding.JOURNAL_FIELD);
+        addField(type, doc, LuceneBinding.TYPE_FIELD);
+        addField(poster, doc, LuceneBinding.POSTER_FIELD);
+        addTextField(title, doc, LuceneBinding.TITLE_FIELD, LuceneBinding.RUS_TITLE_FIELD, LuceneBinding.ENG_TITLE_FIELD);
+        addTextField(content, doc, LuceneBinding.CONTENT_FIELD, LuceneBinding.RUS_CONTENT_FIELD, LuceneBinding.ENG_CONTENT_FIELD);
+        return doc;
+    }
+
     @Override
     public void commit() throws IOException {
         indexWriter.commit();
     }
 
-    private void addField(final String text, final Document doc, final String titleField) {
+    private static void addField(final String text, final Document doc, final String titleField) {
         if (text != null) {
             doc.add(new Field(titleField,
                     text, Store.YES, Index.ANALYZED,
-                    TermVector.WITH_POSITIONS_OFFSETS));
+                    TermVector.NO));
         }
     }
 
-    private void addTextField(final String text, final Document doc, final String titleField,
-                              final String rusTitleField, final String engContentField) {
+    private static void addTextField(final String text, final Document doc, final String titleField,
+                                     final String rusTitleField, final String engContentField) {
         if (text != null) {
             doc.add(new Field(titleField,
                     text, Store.YES, Index.ANALYZED,
-                    TermVector.WITH_POSITIONS_OFFSETS));
+                    TermVector.NO));
             doc.add(new Field(rusTitleField,
                     text, Store.NO, Index.ANALYZED,
-                    TermVector.WITH_POSITIONS_OFFSETS));
+                    TermVector.NO));
             doc.add(new Field(engContentField,
                     text, Store.NO, Index.ANALYZED,
-                    TermVector.WITH_POSITIONS_OFFSETS));
+                    TermVector.NO));
         }
     }
 

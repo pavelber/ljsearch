@@ -18,6 +18,8 @@ public final class LuceneBinding {
     public static final String POSTER_FIELD = "poster";
     public static final String URL_FIELD = "url";
     public static final String DATE_FIELD = "date";
+    /* type + ":" + journal + ":" + url, not analyzed; key for replacing an item instead of duplicating it */
+    public static final String ID_FIELD = "id";
 
 
     public static final String TYPE_FIELD = "contenttype";
