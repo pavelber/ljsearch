@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LJ Search</title>
+<style>
+  :root {
+    --bg: #f6f1e7; --paper: #fffdf8; --ink: #22201c; --muted: #7a7266; --line: #e2d9c8;
+    --accent: #a4372a; --mark: #f7d774; --mark-text: #22201c; --bar: #d8ccb6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17140f; --paper: #1f1b15; --ink: #ebe4d6; --muted: #a2988a; --line: #362f25;
+      --accent: #e0806f; --mark: #6e5310; --mark-text: #fff1c7; --bar: #4a4032;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.6 Georgia, "PT Serif", "Times New Roman", serif; }
+  a { color: inherit; }
+  .sans { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+
+  .masthead { text-align: center; padding: 40px 0 20px; border-bottom: 3px double var(--line); }
+  .masthead h1 { margin: 0; font-size: 52px; font-weight: 400; letter-spacing: -1px; font-style: italic; }
+  .masthead h1 b { font-style: normal; font-weight: 700; color: var(--accent); }
+  .masthead p { margin: 4px 0 0; color: var(--muted); font-size: 14px; letter-spacing: 3px; text-transform: uppercase; }
+
+  form { margin: 24px 0 8px; }
+  .big { display: flex; border-bottom: 2px solid var(--ink); }
+  .big input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink);
+    font: italic 26px/1.4 Georgia, serif; padding: 10px 0; }
+  .big input::placeholder { color: var(--muted); }
+  .big button { border: 0; background: none; color: var(--accent); font: 600 15px -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; padding: 0 0 0 16px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 12px; font-size: 14px; color: var(--muted); align-items: center; }
+  .filters label { display: inline-flex; gap: 6px; align-items: baseline; }
+  .filters select, .filters input { border: 0; border-bottom: 1px dotted var(--muted); background: transparent; color: var(--ink);
+    font: inherit; font-size: 14px; padding: 2px 0; outline: 0; max-width: 180px; }
+  .filters input { width: 120px; }
+  .filters .type a { text-decoration: none; padding: 0 2px; cursor: pointer; }
+  .filters .type a.on { color: var(--ink); border-bottom: 2px solid var(--accent); }
+
+  .timeline { margin: 28px 0 6px; display: none; }
+  .timeline.show { display: block; }
+  .timeline .cap { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; display: flex; justify-content: space-between; }
+  .timeline .cap button { border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; text-transform: none; letter-spacing: 0; }
+  .bars { display: flex; align-items: flex-end; gap: 3px; height: 70px; margin-top: 8px; }
+  .bars button { flex: 1; border: 0; background: var(--bar); cursor: pointer; border-radius: 2px 2px 0 0; min-height: 2px; position: relative; padding: 0; }
+  .bars button:hover, .bars button.on { background: var(--accent); }
+  .bars button.off { opacity: .35; }
+  .axis { display: flex; gap: 3px; font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .axis span { flex: 1; text-align: center; overflow: hidden; }
+
+  .summary { font-size: 14px; color: var(--muted); margin: 18px 0 0; }
+  .year-head { display: flex; align-items: center; gap: 14px; margin: 34px 0 6px; }
+  .year-head h2 { margin: 0; font-size: 30px; font-weight: 400; color: var(--accent); }
+  .year-head::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+  .year-head small { font-size: 13px; color: var(--muted); }
+
+  .entry { background: var(--paper); border: 1px solid var(--line); padding: 18px 22px; margin: 12px 0; position: relative; }
+  .entry.comment { margin-left: 28px; border-left: 3px solid var(--accent); }
+  .entry .date { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .entry h3 { margin: 2px 0 6px; font-size: 22px; font-weight: 700; line-height: 1.3; }
+  .entry h3 a { text-decoration: none; }
+  .entry h3 a:hover { color: var(--accent); }
+  .entry p { margin: 0; }
+  .entry .by { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .entry .by a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+  .entry .by a:hover { color: var(--accent); }
+  .entry .by a.open { color: var(--accent); border: 0; }
+  .entry .date + p { margin-top: 6px; }
+  mark { background: var(--mark); color: var(--mark-text); padding: 0 1px; }
+  .loading, .end { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 0; letter-spacing: 1px; }
+  .bars button:disabled { cursor: default; background: var(--bar); opacity: .4; }
+  .more { display: block; margin: 28px auto; border: 1px solid var(--ink); background: none; color: var(--ink);
+    font: 600 13px -apple-system, "Segoe UI", sans-serif; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 26px; cursor: pointer; }
+  .more:hover { background: var(--ink); color: var(--bg); }
+  .empty { text-align: center; font-style: italic; color: var(--muted); padding: 60px 0; font-size: 20px; }
+  footer { border-top: 3px double var(--line); margin-top: 40px; padding: 18px 0 40px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); }
+  .demo { position: fixed; bottom: 12px; right: 12px; font: 12px sans-serif; background: #f59e0b; color: #000; padding: 4px 10px; border-radius: 6px; }
+  @media (max-width: 600px) {
+    .masthead h1 { font-size: 38px; }
+    .big input { font-size: 21px; }
+    .entry { padding: 14px 16px; }
+    .entry.comment { margin-left: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <h1>lj<b>search</b></h1>
+    <p class="sans">архив живого журнала</p>
+  </header>
+
+  <form id="f" autocomplete="off">
+    <div class="big">
+      <input id="kw" type="search" placeholder="Найти в архиве…" aria-label="Ключевые слова">
+      <button type="submit">Искать</button>
+    </div>
+    <div class="filters sans">
+      <label>в журнале <select id="journal"><option value="">всех</option></select></label>
+      <label>за <select id="year"><option value="">все годы</option></select></label>
+      <label>автор <input id="poster" placeholder="любой"></label>
+      <span class="type" id="type"><a data-v="Post">посты</a> · <a data-v="Comment">комментарии</a> · <a data-v="">всё</a></span>
+    </div>
+  </form>
+
+  <section class="timeline sans" id="tl">
+    <div class="cap"><span id="tlcap">Найденное по годам</span><button id="tlclear" hidden>все годы</button></div>
+    <div class="bars" id="bars"></div>
+    <div class="axis" id="axis"></div>
+  </section>
+
+  <div class="summary sans" id="summary"></div>
+  <main id="results"></main>
+  <div id="sentinel"></div>
+  <div class="loading sans" id="loading" hidden>Подгружаем…</div>
+
+  <footer class="sans">
+    Нужен поиск по личному журналу? <a href="mailto:getlj.com@gmail.com">getlj.com@gmail.com</a> ·
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=PDJ3MD7N62AXE" target="_blank" rel="noopener">поддержать проект</a>
+  </footer>
+</div>
+
+<script src="ljs-core.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var q = LJS.readParams(), PAGE = 30;
+  var gen = 0, next = null, loading = false, lastYear = null, seen = {};
+  var yearStats = null, statsKey = null;   // histogram of the search without the year filter
+
+  LJS.years().forEach(function (y) { $('year').add(new Option(y, y)); });
+  $('kw').value = q.keywords; $('poster').value = q.poster; $('year').value = q.year;
+  setType(q.type);
+
+  LJS.loadJournals(q.priv).then(function (list) {
+    var sel = $('journal'); if (q.priv) sel.innerHTML = '';
+    list.forEach(function (j) { sel.add(new Option(j.journal, j.journal)); });
+    sel.value = q.journal || q.priv || '';
+    if (LJS.isDemo()) document.body.insertAdjacentHTML('beforeend', '<div class="demo">демо-данные</div>');
+    if (q.keywords || q.journal || q.poster || q.year) run();
+  });
+
+  function setType(v) { q.type = v; [].forEach.call($('type').querySelectorAll('a'), function (a) { a.classList.toggle('on', a.dataset.v === v); }); }
+  $('type').onclick = function (e) { if (e.target.dataset.v == null) return; setType(e.target.dataset.v); run(); };
+  $('journal').onchange = $('year').onchange = function () { run(); };
+  $('f').onsubmit = function (e) { e.preventDefault(); run(); };
+  $('tlclear').onclick = function () { $('year').value = ''; run(); };
+  $('bars').onclick = function (e) {
+    var y = e.target.dataset.y; if (!y) return;
+    $('year').value = $('year').value === y ? '' : y; run();
+  };
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && !/INPUT|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('kw').focus(); }
+  });
+
+  function num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function plural(n, one, few, many) {
+    var m10 = n % 10, m100 = n % 100;
+    return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+  }
+
+  function run() {
+    q.keywords = $('kw').value.trim(); q.journal = $('journal').value; q.year = $('year').value; q.poster = $('poster').value.trim();
+    if (!q.keywords && !q.journal && !q.poster && !q.year) return;
+    LJS.writeParams(q);
+    var my = ++gen, key = [q.keywords, q.journal, q.poster, q.type].join('\u0001');
+    next = null; lastYear = null; seen = {}; loading = false;
+    $('summary').textContent = 'Листаем подшивку…'; $('results').innerHTML = ''; $('loading').hidden = true;
+
+    var first = LJS.searchPage(q, null, true, PAGE);
+    // with a year filter the stats cover one year only; keep the histogram of the whole search
+    var hist = !q.year ? first.then(function (p) { return p.years; })
+      : (statsKey === key && yearStats) ? Promise.resolve(yearStats)
+      : LJS.searchPage(Object.assign({}, q, { year: '' }), null, true, 1).then(function (p) { return p.years; });
+
+    Promise.all([first, hist]).then(function (r) {
+      if (my !== gen) return;
+      var page = r[0];
+      yearStats = r[1]; statsKey = key;
+      if (!page.total) {
+        $('tl').classList.remove('show'); $('summary').textContent = '';
+        $('results').innerHTML = '<div class="empty">В архиве ничего не нашлось.</div>'; return;
+      }
+      drawTimeline();
+      var t = page.total, parts = [];
+      if (!q.type && page.posts != null) parts.push(num(page.posts) + ' ' + plural(page.posts, 'пост', 'поста', 'постов'),
+        num(page.comments) + ' ' + plural(page.comments, 'комментарий', 'комментария', 'комментариев'));
+      $('summary').textContent = 'Найдено ' + num(t) + ' ' + plural(t, 'запись', 'записи', 'записей') +
+        (q.year ? ' за ' + q.year + ' год' : '') + (parts.length ? ': ' + parts.join(', ') : '');
+      append(page);
+    }).catch(function (e) { if (my === gen) $('summary').textContent = 'Ошибка: ' + e.message; });
+  }
+
+  function drawTimeline() {
+    var ys = Object.keys(yearStats || {}).map(Number);
+    if (ys.length < 2) { $('tl').classList.remove('show'); return; }
+    var min = Math.min.apply(null, ys), max = Math.max.apply(null, ys), top = 0, all = [];
+    for (var y = min; y <= max; y++) { all.push(y); top = Math.max(top, yearStats[y] || 0); }
+    $('bars').innerHTML = all.map(function (y) {
+      var c = yearStats[y] || 0, on = String(y) === q.year, off = q.year && !on;
+      return '<button data-y="' + y + '" class="' + (on ? 'on' : off ? 'off' : '') + '" title="' + y + ': ' + num(c) +
+        '" style="height:' + (c ? Math.max(4, Math.sqrt(c / top) * 100) : 1) + '%"' + (c ? '' : ' disabled') + '></button>';
+    }).join('');
+    $('axis').innerHTML = all.map(function (y) { return '<span>' + (all.length > 14 ? "'" + String(y).slice(2) : y) + '</span>'; }).join('');
+    $('tlcap').textContent = q.year ? 'Найденное по годам' : 'Найденное по годам · нажмите на год, чтобы показать только его';
+    $('tlclear').hidden = !q.year;
+    $('tl').classList.add('show');
+  }
+
+  function append(page) {
+    var box = $('results');
+    next = page.next;
+    page.results.forEach(function (p) {
+      var k = p.type + ':' + p.url; if (seen[k]) return; seen[k] = 1;
+      var y = new Date(p.date).getFullYear();
+      if (y !== lastYear) {
+        lastYear = y;
+        var c = q.year ? null : (yearStats || {})[y];
+        box.insertAdjacentHTML('beforeend', '<div class="year-head"><h2>' + y + '</h2>' +
+          (c ? '<small class="sans">' + num(c) + '</small>' : '') + '</div>');
+      }
+      var el = document.createElement('article'), title = LJS.cleanTitle(p.title);
+      el.className = 'entry' + (p.type === 'Comment' ? ' comment' : '');
+      el.innerHTML = '<div class="date sans">' + LJS.fmtDate(p.date) + (p.type === 'Comment' ? ' · комментарий' : '') + '</div>' +
+        (title ? '<h3><a href="' + LJS.esc(p.url) + '">' + LJS.esc(title) + '</a></h3>' : '') + '<p></p>' +
+        '<div class="by sans"><a href="' + LJS.journalUrl(p.poster) + '">' + LJS.esc(p.poster) + '</a> в журнале ' +
+        '<a href="' + LJS.journalUrl(p.journal) + '">' + LJS.esc(p.journal) + '</a>' +
+        (title ? '' : ' · <a class="open" href="' + LJS.esc(p.url) + '">открыть →</a>') + '</div>';
+      var para = el.querySelector('p');
+      para.appendChild(LJS.safeSnippet(p.text));
+      var raw = para.textContent, t = raw.trim();
+      if (t && !/^[A-ZА-ЯЁ«"(]/.test(t)) para.insertBefore(document.createTextNode(/^\s/.test(raw) ? '…' : '… '), para.firstChild);
+      if (t && !/[.!?…»"]$/.test(t)) para.appendChild(document.createTextNode(/\s$/.test(raw) ? '…' : ' …'));
+      box.appendChild(el);
+    });
+    if (!next) box.insertAdjacentHTML('beforeend', '<div class="end sans">— конец подшивки —</div>');
+    else nearEnd();
+  }
+
+  function loadMore() {
+    if (!next || loading) return;
+    loading = true; $('loading').textContent = 'Подгружаем…'; $('loading').hidden = false;
+    var my = gen;
+    LJS.searchPage(q, next, false, PAGE).then(function (page) {
+      if (my !== gen) return;
+      loading = false; $('loading').hidden = true; append(page);
+    }).catch(function (e) {
+      if (my !== gen) return;
+      loading = false; $('loading').textContent = 'Не удалось подгрузить: ' + e.message;
+    });
+  }
+
+  // infinite scroll: fetch the next page when the end of the list is within 800px
+  function nearEnd() {
+    if ($('sentinel').getBoundingClientRect().top < innerHeight + 800) loadMore();
+  }
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) { if (es[0].isIntersecting) loadMore(); }, { rootMargin: '0px 0px 800px 0px' })
+      .observe($('sentinel'));
+  }
+  // plus a plain scroll check: the observer does not fire in some cases (background
+  // windows, very fast scrolling to the end); one getBoundingClientRect per event is cheap
+  addEventListener('scroll', nearEnd, { passive: true });
+  addEventListener('resize', nearEnd, { passive: true });
+})();
+</script>
+</body>
+</html>

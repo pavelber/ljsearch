@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LJ Search</title>
+<style>
+  :root {
+    --bg: #fbfbfa; --surface: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --line: #e5e5e7;
+    --accent: #2f5bea; --accent-soft: #e9eefe; --mark: #fff1a8; --mark-text: #1d1d1f;
+    --radius: 14px; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111113; --surface: #1b1b1e; --text: #ececee; --muted: #9a9aa2; --line: #2c2c31;
+      --accent: #7c9cff; --accent-soft: #1f2640; --mark: #5c4d10; --mark-text: #fff6cc;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+
+  header { padding: 18vh 0 28px; text-align: center; transition: padding .35s ease; }
+  body.has-results header { padding: 28px 0 16px; text-align: left; }
+  .logo { font-weight: 700; font-size: 44px; letter-spacing: -1.5px; margin: 0 0 22px; transition: font-size .35s; }
+  .logo span { color: var(--accent); }
+  body.has-results .logo { font-size: 24px; margin-bottom: 14px; }
+  .tagline { color: var(--muted); margin: -14px 0 26px; }
+  body.has-results .tagline { display: none; }
+
+  .searchbox { display: flex; align-items: center; gap: 8px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 6px 6px 20px; box-shadow: var(--shadow); }
+  .searchbox:focus-within { border-color: var(--accent); }
+  .searchbox svg { flex: none; color: var(--muted); }
+  .searchbox input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text);
+    font: inherit; font-size: 18px; padding: 10px 0; }
+  .btn { border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-weight: 600;
+    padding: 10px 22px; cursor: pointer; }
+  .btn:hover { filter: brightness(1.08); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; justify-content: center; }
+  body.has-results .chips { justify-content: flex-start; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 999px; padding: 6px 12px; font-size: 14px; color: var(--text); position: relative; }
+  .chip.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+  .chip select, .chip input { border: 0; outline: 0; background: transparent; color: inherit; font: inherit; max-width: 170px; }
+  .chip input { width: 110px; }
+  .chip label { color: var(--muted); }
+  .chip.on label { color: inherit; opacity: .75; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+  .seg button { border: 0; background: transparent; color: var(--text); font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; }
+  .seg button.on { background: var(--accent-soft); color: var(--accent); }
+
+  .status { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 14px; margin: 18px 0 6px; min-height: 22px; }
+  .status button { background: none; border: 0; color: var(--accent); font: inherit; cursor: pointer; padding: 0; }
+
+  .result { padding: 18px 0; border-bottom: 1px solid var(--line); }
+  .result .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+  .result .meta a { color: var(--muted); }
+  .result .meta a:hover { color: var(--accent); }
+  .result h3 { margin: 4px 0 6px; font-size: 19px; font-weight: 600; line-height: 1.35; }
+  .result p { margin: 0; color: var(--text); opacity: .88; }
+  .tag { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 1px 7px; border-radius: 6px;
+    background: var(--accent-soft); color: var(--accent); }
+  mark { background: var(--mark); color: var(--mark-text); border-radius: 3px; padding: 0 2px; }
+  .more { display: block; margin: 24px auto; }
+  .empty { text-align: center; color: var(--muted); padding: 48px 0; }
+  .skeleton { height: 86px; border-radius: 10px; margin: 16px 0;
+    background: linear-gradient(90deg, var(--line) 0%, var(--surface) 50%, var(--line) 100%); background-size: 200% 100%;
+    animation: sh 1.2s infinite; opacity: .6; }
+  @keyframes sh { to { background-position: -200% 0; } }
+
+  footer { color: var(--muted); font-size: 13px; text-align: center; padding: 48px 0 32px; }
+  footer a { color: var(--muted); text-decoration: underline; }
+  .demo { position: fixed; bottom: 12px; right: 12px; font-size: 12px; background: #f59e0b; color: #000; padding: 4px 10px; border-radius: 6px; }
+  @media (max-width: 560px) {
+    header { padding-top: 10vh; }
+    .logo { font-size: 34px; }
+    .btn { padding: 10px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="logo">lj<span>search</span></h1>
+    <p class="tagline">Полнотекстовый поиск по журналам и сообществам ЖЖ</p>
+    <form id="f" autocomplete="off">
+      <div class="searchbox">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="kw" type="search" placeholder="Что ищем?  (нажмите / чтобы начать)" aria-label="Ключевые слова">
+        <button class="btn" type="submit">Найти</button>
+      </div>
+      <div class="chips">
+        <span class="chip" id="cj"><label for="journal">Журнал</label><select id="journal"><option value="">все</option></select></span>
+        <span class="chip" id="cy"><label for="year">Год</label><select id="year"><option value="">любой</option></select></span>
+        <span class="chip" id="cp"><label for="poster">Автор</label><input id="poster" placeholder="любой"></span>
+        <span class="seg" id="type" role="group" aria-label="Где искать">
+          <button type="button" data-v="Post">Посты</button><button type="button" data-v="Comment">Комментарии</button><button type="button" data-v="">Везде</button>
+        </span>
+      </div>
+    </form>
+  </header>
+
+  <main>
+    <div class="status" id="status"></div>
+    <div id="results"></div>
+  </main>
+
+  <footer>
+    Нужен поиск по личному журналу? Пишите на <a href="mailto:getlj.com@gmail.com">getlj.com@gmail.com</a>
+    · <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=PDJ3MD7N62AXE" target="_blank" rel="noopener">Поддержать проект</a>
+  </footer>
+</div>
+
+<script src="ljs-core.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var q = LJS.readParams(), all = [], shown = 0, PAGE = 30;
+
+  LJS.years().forEach(function (y) { $('year').add(new Option(y, y)); });
+  $('kw').value = q.keywords; $('poster').value = q.poster; $('year').value = q.year;
+  setType(q.type);
+
+  LJS.loadJournals(q.priv).then(function (list) {
+    var sel = $('journal');
+    if (q.priv) sel.innerHTML = '';
+    list.forEach(function (j) { sel.add(new Option(j.journal, j.journal)); });
+    sel.value = q.journal || q.priv || '';
+    chipState();
+    if (LJS.isDemo()) document.body.insertAdjacentHTML('beforeend', '<div class="demo">демо-данные</div>');
+    if (q.keywords || q.journal || q.poster || q.year) run();
+  });
+
+  function setType(v) {
+    q.type = v;
+    [].forEach.call($('type').children, function (b) { b.classList.toggle('on', b.dataset.v === v); });
+  }
+  function chipState() {
+    $('cj').classList.toggle('on', !!$('journal').value);
+    $('cy').classList.toggle('on', !!$('year').value);
+    $('cp').classList.toggle('on', !!$('poster').value);
+  }
+  $('type').addEventListener('click', function (e) { if (e.target.dataset.v != null) { setType(e.target.dataset.v); if (document.body.classList.contains('has-results')) run(); } });
+  ['journal', 'year'].forEach(function (id) { $(id).addEventListener('change', function () { chipState(); if (document.body.classList.contains('has-results')) run(); }); });
+  $('poster').addEventListener('input', chipState);
+  $('f').addEventListener('submit', function (e) { e.preventDefault(); run(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); $('kw').focus(); }
+  });
+
+  function run() {
+    q.keywords = $('kw').value.trim(); q.journal = $('journal').value;
+    q.year = $('year').value; q.poster = $('poster').value.trim();
+    LJS.writeParams(q);
+    document.body.classList.add('has-results');
+    $('status').textContent = 'Ищем…';
+    $('results').innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+    LJS.search(q).then(function (data) {
+      all = data; shown = 0; $('results').innerHTML = '';
+      if (!data.length) {
+        $('status').textContent = '';
+        $('results').innerHTML = '<div class="empty">Ничего не нашлось. Попробуйте другие слова или уберите фильтры.</div>';
+        return;
+      }
+      $('status').innerHTML = '<span>Найдено: <b>' + data.length + (data.length >= 400 ? '+' : '') + '</b></span>';
+      more();
+    }).catch(function (e) {
+      $('status').textContent = '';
+      $('results').innerHTML = '<div class="empty">Ошибка поиска: ' + LJS.esc(e.message) + '</div>';
+    });
+  }
+
+  function more() {
+    var box = $('results'), old = box.querySelector('.more');
+    if (old) old.remove();
+    all.slice(shown, shown + PAGE).forEach(function (p) {
+      var el = document.createElement('article');
+      el.className = 'result';
+      el.innerHTML =
+        '<div class="meta">' + (p.type === 'Comment' ? '<span class="tag">комментарий</span>' : '') +
+        '<a href="' + LJS.journalUrl(p.journal) + '">' + LJS.esc(p.journal) + '</a>' +
+        '<span>·</span><a href="' + LJS.journalUrl(p.poster) + '">' + LJS.esc(p.poster) + '</a>' +
+        '<span>·</span><span>' + LJS.fmtDate(p.date) + '</span></div>' +
+        '<h3><a href="' + LJS.esc(p.url) + '">' + (LJS.esc(LJS.cleanTitle(p.title)) || '(без заголовка)') + '</a></h3><p></p>';
+      el.querySelector('p').appendChild(LJS.safeSnippet(p.text));
+      box.appendChild(el);
+    });
+    shown += PAGE;
+    if (shown < all.length) {
+      var b = document.createElement('button');
+      b.className = 'btn more'; b.textContent = 'Показать ещё (' + (all.length - shown) + ')';
+      b.onclick = more; box.appendChild(b);
+    }
+  }
+})();
+</script>
+</body>
+</html>

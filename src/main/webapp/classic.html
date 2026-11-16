@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>
+        lj search
+    </title>
+    <base href="/">
+    <link rel="stylesheet" href="/webjars/bootstrap/3.3.5/css/bootstrap.min.css" type="text/css"/>
+    <link rel="stylesheet" href="index.css" type="text/css"/>
+    <script src="/webjars/angularjs/1.4.6/angular.min.js"></script>
+    <script src="/webjars/momentjs/2.10.6/moment.js"></script>
+    <script src="index.js"></script>
+
+<body ng-app="app">
+
+<div ng-controller="SearchCtrl">
+
+    <form class="well form-horizontal" role="form">
+        <div class="form-group">
+            <label class="control-label  col-sm-1">Search:</label>
+
+            <div class="controls col-sm-2">
+                <input type="text" ng-model="keywords" class="form-control input-medium search-query"
+                       placeholder="Keywords...">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label  col-sm-1">in journal </label>
+
+            <div class="controls  col-sm-2"><select id="journals" class="form-control input-block-level" ng-model="journal"
+                                                    ng-options="obj.id as obj.journal for obj in journals">
+                </option>
+            </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label  col-sm-1">year </label>
+
+            <div class="controls  col-sm-1"><select id="years" class="form-control input-block-level" ng-model="year"
+                                                    ng-options="obj for obj in years">
+                <option value=""></option>
+            </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label  col-sm-1">by poster</label>
+
+            <div class="controls  col-sm-1">
+                <input type="text" ng-model="poster" class="form-control input-small search-query" placeholder="Poster">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label  col-sm-1">Search in </label>
+
+            <div class="controls  col-sm-2">
+                <select id="sel" class="form-control input-block-level" ng-model="type">
+                    <option value="Post">posts</option>
+                    <option value="Comment">comments</option>
+                    <option value="">anywhere</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-1 col-sm-6">
+                <button type="submit" class="btn btn-info" ng-click="search()">Search</button>
+            </div>
+        </div>
+    </form>
+
+    <div id="private">Если Вам нужен поиск по личному журналу, пишите на getlj.com@gmail.com</div>
+    <br/>
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" class="form-horizontal" target="_top">
+        <div class="form-group">
+            <label class="control-label  col-sm-2">Donate to support this project: </label>
+
+            <div class="controls  col-sm-1">
+                <input type="hidden" name="cmd" value="_s-xclick">
+                <input type="hidden" name="hosted_button_id" value="PDJ3MD7N62AXE">
+                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0"
+                       name="submit"
+                       alt="PayPal - The safer, easier way to pay online!">
+                <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+            </div>
+        </div>
+    </form>
+    <div>
+        <div class="lead">{{message}}</div>
+    </div>
+    <table>
+        <tr ng-repeat="post in result">
+            <td><a href="{{post.url}}">{{post.title}}</a>
+                in <a href="http://{{post.journal}}.livejournal.com/">{{post.journal}}</a>
+                by <img src="ljuser.jpg"/><A href="http://{{post.poster}}.livejournal.com/">{{post.poster}}</A>
+                from {{post.formateddate}}
+                <div ng-bind-html="post.text|trustAsHtml"></div>
+            </td>
+
+        </tr>
+    </table>
+</div>
+</body>
+
+</html>

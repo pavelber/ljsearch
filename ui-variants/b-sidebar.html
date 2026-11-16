@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LJ Search</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --text: #17191c; --muted: #6b7280; --line: #e3e5e9;
+    --accent: #0f766e; --accent-soft: #e6f4f2; --mark: #fde68a; --mark-text: #17191c; --hover: #f7f8fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f12; --panel: #161a1f; --text: #e6e8eb; --muted: #8b939e; --line: #262c33;
+      --accent: #2dd4bf; --accent-soft: #0f2f2c; --mark: #6b5208; --mark-text: #fff3c4; --hover: #1c2127;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 "Inter", -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  a { color: inherit; }
+  .top { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 16px; padding: 10px 20px; }
+  .brand { font-weight: 800; font-size: 18px; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+  .brand i { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; display: grid; place-items: center;
+    font-style: normal; font-size: 13px; }
+  .q { flex: 1; min-width: 0; display: flex; max-width: 720px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+  .q:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .q input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; padding: 9px 12px; }
+  .q button { border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 600; padding: 0 18px; border-radius: 0 9px 9px 0; cursor: pointer; }
+  .menu { display: none; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 8px; padding: 7px 10px; font: inherit; cursor: pointer; }
+
+  .layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; padding: 20px; }
+  aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; align-self: start;
+    position: sticky; top: 74px; max-height: calc(100vh - 94px); overflow: auto; }
+  aside h4 { margin: 18px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  aside h4:first-child { margin-top: 0; }
+  .field { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; padding: 8px 10px; }
+  .jlist { max-height: 240px; overflow: auto; margin-top: 6px; border: 1px solid var(--line); border-radius: 8px; }
+  .jlist button { display: flex; justify-content: space-between; width: 100%; border: 0; background: none; color: var(--text); font: inherit;
+    text-align: left; padding: 6px 10px; cursor: pointer; gap: 8px; }
+  .jlist button small { color: var(--muted); white-space: nowrap; }
+  .jlist button:hover { background: var(--hover); }
+  .jlist button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+  .seg button { border: 0; background: none; color: var(--text); font: inherit; font-size: 13px; padding: 6px 4px; border-radius: 6px; cursor: pointer; }
+  .seg button.on { background: var(--panel); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-weight: 600; }
+  .years { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .years button { border: 1px solid var(--line); background: none; color: var(--text); font: inherit; font-size: 13px; padding: 4px 0; border-radius: 6px; cursor: pointer; }
+  .years button:hover { border-color: var(--accent); }
+  .years button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .years button .n { display: block; font-size: 10px; color: var(--muted); line-height: 1; }
+  .years button.on .n { color: #fff; opacity: .8; }
+  .reset { margin-top: 16px; width: 100%; border: 1px dashed var(--line); background: none; color: var(--muted); font: inherit; padding: 7px; border-radius: 8px; cursor: pointer; }
+  .side-foot { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .side-foot a { color: var(--accent); }
+
+  .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
+  .bar .count { font-weight: 600; }
+  .bar .count small { color: var(--muted); font-weight: 400; }
+  .active { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill { font-size: 13px; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 3px 4px 3px 10px; display: inline-flex; gap: 4px; align-items: center; }
+  .pill button { border: 0; background: none; color: inherit; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 4px; }
+  .sort { border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; display: grid; grid-template-columns: 40px 1fr; gap: 14px; }
+  .card:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; font-size: 15px; text-transform: uppercase; }
+  .card h3 { margin: 0 0 2px; font-size: 16px; line-height: 1.35; }
+  .card h3 a { text-decoration: none; }
+  .card h3 a:hover { color: var(--accent); }
+  .meta { font-size: 13px; color: var(--muted); }
+  .meta a { text-decoration: none; color: var(--text); font-weight: 500; }
+  .meta a:hover { color: var(--accent); }
+  .card p { margin: 8px 0 0; font-size: 14.5px; }
+  .kind { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 2px; }
+  .kind.c { background: #ede9fe; color: #6d28d9; }
+  @media (prefers-color-scheme: dark) { .kind.c { background: #2e1f57; color: #c4b5fd; } }
+  mark { background: var(--mark); color: var(--mark-text); padding: 0 2px; border-radius: 3px; }
+  .pager { display: flex; justify-content: center; gap: 4px; margin: 20px 0; flex-wrap: wrap; }
+  .pager button { min-width: 36px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+  .pager button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .empty { background: var(--panel); border: 1px dashed var(--line); border-radius: 12px; padding: 48px 20px; text-align: center; color: var(--muted); }
+  .empty b { display: block; color: var(--text); font-size: 17px; margin-bottom: 6px; }
+  .spin { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: r .8s linear infinite; margin: 40px auto; }
+  @keyframes r { to { transform: rotate(360deg); } }
+  .demo { position: fixed; bottom: 12px; right: 12px; font-size: 12px; background: #f59e0b; color: #000; padding: 4px 10px; border-radius: 6px; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; padding: 12px; }
+    .menu { display: block; }
+    .brand span { display: none; }
+    .top { padding: 10px 12px; gap: 8px; }
+    aside { display: none; position: static; max-height: none; }
+    body.filters aside { display: block; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i>LJ</i><span>search</span></div>
+  <form class="q" id="f" autocomplete="off">
+    <input id="kw" type="search" placeholder="Поиск по постам и комментариям…" aria-label="Ключевые слова">
+    <button type="submit">Найти</button>
+  </form>
+  <button class="menu" id="menu" type="button">Фильтры</button>
+</header>
+
+<div class="layout">
+  <aside>
+    <h4>Где искать</h4>
+    <div class="seg" id="type"><button data-v="Post">Посты</button><button data-v="Comment">Комменты</button><button data-v="">Везде</button></div>
+
+    <h4>Журнал</h4>
+    <input class="field" id="jfilter" placeholder="Найти журнал…">
+    <div class="jlist" id="jlist"></div>
+
+    <h4>Автор</h4>
+    <input class="field" id="poster" placeholder="Ник в ЖЖ">
+
+    <h4>Год</h4>
+    <div class="years" id="years"></div>
+
+    <button class="reset" id="reset" type="button">Сбросить фильтры</button>
+    <div class="side-foot">
+      Нужен поиск по личному журналу? <a href="mailto:getlj.com@gmail.com">getlj.com@gmail.com</a><br>
+      <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=PDJ3MD7N62AXE" target="_blank" rel="noopener">♥ Поддержать проект</a>
+    </div>
+  </aside>
+
+  <main>
+    <div class="bar" id="bar" hidden>
+      <div class="count" id="count"></div>
+      <div class="active" id="active"></div>
+      <select class="sort" id="sort"><option value="new">Сначала новые</option><option value="old">Сначала старые</option></select>
+    </div>
+    <div id="results"><div class="empty"><b>Поиск по архиву ЖЖ</b>Введите слова, выберите журнал или год слева.</div></div>
+    <div class="pager" id="pager"></div>
+  </main>
+</div>
+
+<script src="ljs-core.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var q = LJS.readParams(), journals = [], data = [], page = 0, PAGE = 20;
+  var COLORS = ['#0f766e', '#7c3aed', '#db2777', '#ea580c', '#2563eb', '#65a30d', '#0891b2', '#9333ea'];
+  function color(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return COLORS[Math.abs(h) % COLORS.length]; }
+
+  $('kw').value = q.keywords; $('poster').value = q.poster;
+  renderType(); renderYears();
+  $('menu').onclick = function () { document.body.classList.toggle('filters'); };
+
+  LJS.loadJournals(q.priv).then(function (list) {
+    journals = list; if (q.priv) q.journal = q.priv;
+    renderJournals();
+    if (LJS.isDemo()) document.body.insertAdjacentHTML('beforeend', '<div class="demo">демо-данные</div>');
+    if (q.keywords || q.journal || q.poster || q.year) run();
+  });
+
+  function renderType() {
+    [].forEach.call($('type').children, function (b) { b.classList.toggle('on', b.dataset.v === q.type); });
+  }
+  $('type').onclick = function (e) { if (e.target.dataset.v == null) return; q.type = e.target.dataset.v; renderType(); run(); };
+
+  function renderYears() {
+    $('years').innerHTML = LJS.years().map(function (y) {
+      return '<button data-y="' + y + '" class="' + (String(y) === String(q.year) ? 'on' : '') + '">' + y + '</button>';
+    }).join('');
+  }
+  $('years').onclick = function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    q.year = q.year === b.dataset.y ? '' : b.dataset.y; renderYears(); run();
+  };
+
+  function renderJournals() {
+    var f = $('jfilter').value.trim().toLowerCase();
+    var list = [{ journal: '', last: null }].concat(journals).filter(function (j) { return !f || j.journal.toLowerCase().indexOf(f) >= 0; });
+    $('jlist').innerHTML = list.map(function (j) {
+      return '<button data-j="' + LJS.esc(j.journal) + '" class="' + (j.journal === q.journal ? 'on' : '') + '">' +
+        '<span>' + (j.journal ? LJS.esc(j.journal) : 'Все журналы') + '</span>' +
+        (j.last ? '<small title="проиндексирован до">' + LJS.fmtDate(j.last, true) + '</small>' : '') + '</button>';
+    }).join('');
+  }
+  $('jfilter').oninput = renderJournals;
+  $('jlist').onclick = function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    q.journal = b.dataset.j; renderJournals(); run();
+  };
+  $('poster').onchange = function () { q.poster = this.value.trim(); run(); };
+  $('reset').onclick = function () {
+    q.journal = q.priv || ''; q.year = ''; q.poster = ''; q.type = 'Post';
+    $('poster').value = ''; renderJournals(); renderYears(); renderType(); run();
+  };
+  $('f').onsubmit = function (e) { e.preventDefault(); run(); };
+  $('sort').onchange = function () { sortData(); page = 0; renderPage(); };
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && !/INPUT|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('kw').focus(); }
+  });
+
+  function sortData() {
+    var dir = $('sort').value === 'old' ? 1 : -1;
+    data.sort(function (a, b) { return dir * ((a.date || 0) - (b.date || 0)); });
+  }
+
+  function renderActive() {
+    var items = [];
+    if (q.journal && !q.priv) items.push(['journal', 'журнал: ' + q.journal]);
+    if (q.poster) items.push(['poster', 'автор: ' + q.poster]);
+    if (q.year) items.push(['year', q.year + ' год']);
+    $('active').innerHTML = items.map(function (i) {
+      return '<span class="pill">' + LJS.esc(i[1]) + '<button data-k="' + i[0] + '" aria-label="убрать">×</button></span>';
+    }).join('');
+  }
+  $('active').onclick = function (e) {
+    var k = e.target.dataset.k; if (!k) return;
+    q[k] = ''; if (k === 'poster') $('poster').value = '';
+    renderJournals(); renderYears(); run();
+  };
+
+  function run() {
+    q.keywords = $('kw').value.trim();
+    if (!q.keywords && !q.journal && !q.poster && !q.year) return;
+    LJS.writeParams(q);
+    document.body.classList.remove('filters');
+    $('bar').hidden = false; renderActive(); $('count').textContent = 'Ищем…';
+    $('results').innerHTML = '<div class="spin"></div>'; $('pager').innerHTML = '';
+    LJS.search(q).then(function (d) {
+      data = d; page = 0; sortData();
+      $('count').innerHTML = d.length ? (d.length >= 400 ? '400+' : d.length) + ' <small>результатов</small>' : '';
+      if (!d.length) {
+        $('results').innerHTML = '<div class="empty"><b>Ничего не найдено</b>Попробуйте другие слова или уберите часть фильтров.</div>';
+        return;
+      }
+      renderPage();
+    }).catch(function (e) {
+      $('count').textContent = '';
+      $('results').innerHTML = '<div class="empty"><b>Ошибка</b>' + LJS.esc(e.message) + '</div>';
+    });
+  }
+
+  function renderPage() {
+    var box = $('results'); box.innerHTML = '';
+    data.slice(page * PAGE, page * PAGE + PAGE).forEach(function (p) {
+      var el = document.createElement('article'); el.className = 'card';
+      el.innerHTML =
+        '<div class="avatar" style="background:' + color(p.poster || '?') + '">' + LJS.esc((p.poster || '?').charAt(0)) + '</div>' +
+        '<div><h3><a href="' + LJS.esc(p.url) + '">' + (LJS.esc(LJS.cleanTitle(p.title)) || '(без заголовка)') + '</a>' +
+        (p.type === 'Comment' ? '<span class="kind c">коммент</span>' : '') + '</h3>' +
+        '<div class="meta"><a href="' + LJS.journalUrl(p.poster) + '">' + LJS.esc(p.poster) + '</a> в ' +
+        '<a href="' + LJS.journalUrl(p.journal) + '">' + LJS.esc(p.journal) + '</a> · ' + LJS.fmtDate(p.date) + '</div><p></p></div>';
+      el.querySelector('p').appendChild(LJS.safeSnippet(p.text));
+      box.appendChild(el);
+    });
+    var pages = Math.ceil(data.length / PAGE), html = '';
+    if (pages > 1) for (var i = 0; i < pages; i++) html += '<button data-p="' + i + '" class="' + (i === page ? 'on' : '') + '">' + (i + 1) + '</button>';
+    $('pager').innerHTML = html;
+  }
+  $('pager').onclick = function (e) {
+    if (e.target.dataset.p == null) return;
+    page = +e.target.dataset.p; renderPage(); window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+})();
+</script>
+</body>
+</html>

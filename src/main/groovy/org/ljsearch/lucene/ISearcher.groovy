@@ -8,4 +8,7 @@ import org.ljsearch.IndexedType
 interface ISearcher {
 
     List<Post> search(String journal, String poster, String text, Date from, Date t, IndexedType type)
+
+    SearchPage searchPage(String journal, String poster, String text, Date from, Date to, IndexedType type,
+                          String cursor, int limit, boolean withStats)
 }

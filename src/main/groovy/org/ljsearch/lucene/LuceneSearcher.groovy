@@ -10,6 +10,7 @@ import org.apache.lucene.search.*
 import org.apache.lucene.search.highlight.*
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
+import org.apache.lucene.util.BytesRef
 import org.ljsearch.IndexedType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -49,63 +50,104 @@ class LuceneSearcher implements ISearcher {
 
     @Override
     List<Post> search(String journal, String poster, String text, Date from, Date to, IndexedType type) {
+        // the old API: the newest 400 hits in one response
+        SearchPage page = searchPage(journal, poster, text, from, to, type, null, 400, false)
+        return page.results.stream().distinct().collect(Collectors.toList())
+    }
 
-        logger.info("Searching for " + text)
+    /**
+     * One page of hits, newest first. Paging uses a cursor (searchAfter), so
+     * every page costs the same: the collector keeps only "limit" entries and
+     * only those are loaded and highlighted. withStats adds counts per year
+     * (collected in the same pass over the hits) and posts/comments (one extra
+     * count query when no type filter is set).
+     */
+    @Override
+    SearchPage searchPage(String journal, String poster, String text, Date from, Date to, IndexedType type,
+                          String cursor, int limit, boolean withStats) {
+        logger.info("Searching for " + text + (cursor ? " after " + cursor : ""))
 
         synchronized (this) {//todo bad
             if (mgr == null) {
                 init()
             }
         }
+        SearchPage page = new SearchPage()
+        if (StringUtils.isEmpty(journal) && StringUtils.isEmpty(poster) && StringUtils.isEmpty(text) &&
+                type == null && from == null && to == null) {
+            return page
+        }
 
         mgr.maybeRefresh()
-        def searcher = mgr.acquire()
-        List<Post> results = []
-        if (!StringUtils.isEmpty(journal) ||
-                !StringUtils.isEmpty(poster) ||
-                !StringUtils.isEmpty(text) ||
-                type != null ||
-                from != null || to != null
-        ) {
-            try {
-                Query q = queryCreator.generate(text, journal, poster, from, to, type)
-                // Highlight only the words the user typed: the full query also
-                // holds the OR over all public journals, the poster and the
-                // date range, whose terms used to get marked inside the text.
-                Query textQuery = StringUtils.isEmpty(text) ? null : queryCreator.generate(text)
-                SortField startField = new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true)
+        IndexSearcher searcher = mgr.acquire()
+        try {
+            Query q = queryCreator.generate(text, journal, poster, from, to, type)
+            // Highlight only the words the user typed: the full query also
+            // holds the OR over all public journals, the poster and the
+            // date range, whose terms used to get marked inside the text.
+            Query textQuery = StringUtils.isEmpty(text) ? null : queryCreator.generate(text)
+            Sort sort = new Sort(new SortField(LuceneBinding.DATE_FIELD, SortField.Type.STRING_VAL, true))
 
-                Sort sort = new Sort(startField)
+            TopFieldCollector top = TopFieldCollector.create(sort, limit, parseCursor(cursor), true, false, false)
+            YearCountCollector years = withStats ? new YearCountCollector() : null
+            searcher.search(q, years == null ? (Collector) top : MultiCollector.wrap(top, years))
+            TopDocs docs = top.topDocs()
 
-                TopDocs docs = searcher.search(q, 400, sort)
-
-                ScoreDoc[] hits = docs.scoreDocs
-                for (int i = 0; i < hits.length; ++i) {
-                    int docId = hits[i].doc
-                    Document d = searcher.doc(docId)
-
-                    def content = d.get(LuceneBinding.CONTENT_FIELD)
-
-
-                    String citation = createCitation(textQuery, content ?: "")
-                    results << new Post(
-                            title: d.get(LuceneBinding.TITLE_FIELD) ?: "<no title>",
-                            journal: d.get(LuceneBinding.JOURNAL_FIELD),
-                            poster: d.get(LuceneBinding.POSTER_FIELD),
-                            url: d.get(LuceneBinding.URL_FIELD),
-                            date: DateTools.stringToDate(d.get(LuceneBinding.DATE_FIELD)).time,
-                            text: citation,
-                            type: IndexedType.valueOf(d.get(LuceneBinding.TYPE_FIELD))
-                    )
-                }
-            } finally {
-                mgr.release(searcher)
+            page.total = docs.totalHits
+            ScoreDoc[] hits = docs.scoreDocs
+            for (ScoreDoc hit : hits) {
+                page.results << toPost(searcher.doc(hit.doc), textQuery)
             }
+            if (hits.length == limit) {
+                page.next = makeCursor((FieldDoc) hits[hits.length - 1])
+            }
+            if (withStats) {
+                page.years = years.getCounts()
+                if (type == null) {
+                    page.posts = searcher.count(queryCreator.generate(text, journal, poster, from, to, IndexedType.Post))
+                    page.comments = page.total - page.posts
+                } else {
+                    page.posts = type == IndexedType.Post ? page.total : 0
+                    page.comments = type == IndexedType.Comment ? page.total : 0
+                }
+            }
+        } finally {
+            mgr.release(searcher)
         }
-        return results.stream().distinct().collect(Collectors.toList())
+        return page
     }
 
-    private createCitation(Query q, String content) {
+    private Post toPost(Document d, Query textQuery) {
+        def content = d.get(LuceneBinding.CONTENT_FIELD)
+        return new Post(
+                title: d.get(LuceneBinding.TITLE_FIELD) ?: "<no title>",
+                journal: d.get(LuceneBinding.JOURNAL_FIELD),
+                poster: d.get(LuceneBinding.POSTER_FIELD),
+                url: d.get(LuceneBinding.URL_FIELD),
+                date: DateTools.stringToDate(d.get(LuceneBinding.DATE_FIELD)).time,
+                text: createCitation(textQuery, content ?: ""),
+                type: IndexedType.valueOf(d.get(LuceneBinding.TYPE_FIELD))
+        )
+    }
+
+    /* cursor = "<date sort value>_<doc id>" of the last hit of the previous page */
+    static String makeCursor(FieldDoc last) {
+        return ((BytesRef) last.fields[0]).utf8ToString() + "_" + last.doc
+    }
+
+    static FieldDoc parseCursor(String cursor) {
+        if (StringUtils.isEmpty(cursor)) {
+            return null
+        }
+        int i = cursor.lastIndexOf('_')
+        if (i <= 0) {
+            throw new IllegalArgumentException("bad cursor")
+        }
+        int doc = Integer.parseInt(cursor.substring(i + 1))
+        return new FieldDoc(doc, Float.NaN, [new BytesRef(cursor.substring(0, i))] as Object[])
+    }
+
+    private String createCitation(Query q, String content) {
         String citation
         def highlited = q == null ? null : getHighlightedField(q, LuceneBinding.getAnalyzer(), LuceneBinding.CONTENT_FIELD, content)
         if (highlited != null) {
@@ -122,7 +164,7 @@ class LuceneSearcher implements ISearcher {
         QueryScorer queryScorer = new QueryScorer(query, fieldName);
         Highlighter highlighter = new Highlighter(formatter, queryScorer);
         highlighter.setTextFragmenter(new SimpleSpanFragmenter(queryScorer, 100));
-        // Up to 400 hits are highlighted per search; analysing every text in
+        // Up to one page of hits (400 for the old API) is highlighted per search; analysing every text in
         // full was the slowest part. A match beyond this limit falls back to
         // the first line of the text.
         highlighter.setMaxDocCharsToAnalyze(MAX_CHARS_TO_HIGHLIGHT);
