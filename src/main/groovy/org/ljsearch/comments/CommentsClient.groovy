@@ -1,5 +1,8 @@
 package org.ljsearch.comments
 
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.collections.IteratorUtils
 import org.htmlcleaner.CleanerProperties
 import org.htmlcleaner.DomSerializer
@@ -110,10 +113,20 @@ class CommentsClient implements ICommentsClient {
 
     @Override
     Collection<Comment> getComments(String postUrl) {
-        def comments = [] as List<Comment>
-        // Every markup walks the same pages; share the downloads between them so
+        // Every strategy walks the same pages; share the downloads between them so
         // that each page is requested from LiveJournal once, not once per markup.
         PageCache cache = new PageCache()
+
+        // Current LJ pages carry the comments as JSON in Site.page; the HTML
+        // markups below match nothing there. When the JSON is present it is the
+        // answer (also when it has no comments), and no DOM is built at all.
+        Collection<Comment> fromJson = getJsonComments(postUrl, cache)
+        if (fromJson != null) {
+            logger.info(postUrl + " - " + fromJson.size() + " comments")
+            return fromJson
+        }
+
+        def comments = [] as List<Comment>
         for (int i = 0; i < CommentsClient.markups.size(); i++) {
 
             def tempComments = getComments(postUrl, i, cache)
@@ -132,6 +145,121 @@ class CommentsClient implements ICommentsClient {
     }
 
     static Collection<Comment> getComments(final String posturl, int markupIndex, PageCache cache) {
+        return walkPages(posturl, cache) { String url ->
+            parseTree(cache.get(url), posturl, markupIndex)
+        }
+    }
+
+    /**
+     * Comments from the Site.page JSON of the post pages, or null when the
+     * first page has no such JSON (an old-style page for the markups).
+     */
+    static Collection<Comment> getJsonComments(final String posturl, PageCache cache) {
+        return walkPages(posturl, cache) { String url ->
+            ParsingResult result = parseJson(cache.getHtml(url))
+            if (result == null && url != posturl) {
+                // only the post page itself decides the format
+                result = new ParsingResult(dic: [:], links: [], collapsed_links: [])
+            }
+            result
+        }
+    }
+
+    private static final ObjectMapper JSON = new ObjectMapper()
+    private static final String SITE_PAGE = "Site.page = "
+
+    /**
+     * Comments of one page from its "Site.page = {...}" script. Returns null
+     * when the page has no Site.page with a comments list. Comments of a
+     * collapsed thread are not in the JSON (loaded = 0); their thread URLs are
+     * returned as collapsed_links, and that page has the thread expanded.
+     */
+    static ParsingResult parseJson(byte[] html) {
+        String page = new String(html, "UTF-8")
+        int start = page.indexOf(SITE_PAGE)
+        if (start < 0) {
+            return null
+        }
+        JsonNode site
+        JsonParser parser = JSON.getFactory().createParser(new StringReader(page.substring(start + SITE_PAGE.length())))
+        try {
+            site = JSON.readTree(parser) // reads the object, ignores the script after it
+        } finally {
+            parser.close()
+        }
+        JsonNode list = site?.get("comments")
+        if (list == null || !list.isArray()) {
+            return null
+        }
+
+        Map<String, Comment> comments = [:]
+        List<String> links = []
+        List<String> collapsed = []
+        for (JsonNode c : list) {
+            String threadUrl = text(c, "thread_url")
+            String thread = text(c, "thread") ?: text(c, "dtalkid")
+            if (threadUrl.isEmpty() || thread.isEmpty()) {
+                continue
+            }
+            String url = threadUrl.split("#")[0]
+            if (c.path("deleted").asInt(0) != 0) {
+                continue
+            }
+            if (c.path("loaded").asInt(1) == 0) {
+                collapsed.add(url)
+                continue
+            }
+            Comment comment = new Comment()
+            comment.link = threadUrl
+            comment.user = text(c, "uname") ?: text(c, "dname")
+            comment.subject = htmlToText(text(c, "subject"))
+            comment.text = htmlToText(text(c, "article"))
+            long ts = c.path("ctime_ts").asLong(0)
+            if (ts > 0) {
+                comment.@date = new Date(ts * 1000L)
+            } else {
+                comment.date = text(c, "ctime")
+            }
+            if (comment.isEmpty()) {
+                continue
+            }
+            comments[thread] = comment
+            links.add(url)
+        }
+        return new ParsingResult(dic: comments, links: links, collapsed_links: collapsed)
+    }
+
+    private static String text(JsonNode node, String field) {
+        JsonNode value = node.get(field)
+        return value == null || value.isNull() ? "" : value.asText()
+    }
+
+    /** Comment HTML to plain text: line breaks kept, tags dropped, entities decoded. */
+    static String htmlToText(String html) {
+        if (html == null || html.isEmpty()) {
+            return ""
+        }
+        String withBreaks = html.replaceAll(/(?i)<br\s*\/?>|<\/p>|<\/div>/, "\n")
+        // numeric entities; HtmlCleaner decodes only the named ones
+        withBreaks = withBreaks.replaceAll(/&#(x[0-9a-fA-F]+|[0-9]+);/) { all, String code ->
+            int cp = code.startsWith("x") ? Integer.parseInt(code.substring(1), 16) : Integer.parseInt(code)
+            Character.isValidCodePoint(cp) && cp != 38 && cp != 60 ? new String(Character.toChars(cp)) : all
+        }
+        CleanerProperties props = new CleanerProperties()
+        props.setTranslateSpecialEntities(true)
+        props.setRecognizeUnicodeChars(true)
+        props.setDeserializeEntities(true)
+        props.setOmitComments(true)
+        TagNode node = new HtmlCleaner(props).clean(withBreaks)
+        return node.getText().toString().trim()
+    }
+
+    /**
+     * Loads the post page, the collapsed threads and ?page=N pages until no new
+     * comments appear. parser returns null when the page is not in its format;
+     * then the whole result is null. A page that fails to load ends the walk.
+     */
+    private static Collection<Comment> walkPages(final String posturl, PageCache cache, Closure<ParsingResult> parser) {
 
         Map<String, Comment> comments = [:]
         def visited = new HashSet<>()
@@ -144,15 +272,14 @@ class CommentsClient implements ICommentsClient {
         while (true) {
             while (unloaded.size() > 0) {
                 def url = unloaded.pop()
-                def doc
+                ParsingResult aggregate
                 try {
-                    doc = cache.get(url)
+                    aggregate = parser.call(url)
                 } catch (Exception w) {
                     break
                 }
                 visited.add(url)
-                def aggregate = parseTree(doc, posturl, markupIndex)// Try another markup
-                if (aggregate == null) return null
+                if (aggregate == null) return null // Try another markup
                 comments.putAll(aggregate.dic)
                 loaded.addAll(aggregate.links)
                 unloaded.addAll(aggregate.collapsed_links)
@@ -238,6 +365,12 @@ class CommentsClient implements ICommentsClient {
         private long bytes = 0
 
         Document get(String url) {
+            // Qualified call: an unqualified one from this inner class goes
+            // through methodMissing, which turns the byte[] into a List.
+            return CommentsClient.parseHtml(getHtml(url))
+        }
+
+        byte[] getHtml(String url) {
             Exception previous = failed[url]
             if (previous != null) {
                 throw previous
@@ -259,9 +392,7 @@ class CommentsClient implements ICommentsClient {
                     bytes -= pages.remove(oldest).length
                 }
             }
-            // Qualified call: an unqualified one from this inner class goes
-            // through methodMissing, which turns the byte[] into a List.
-            return CommentsClient.parseHtml(html)
+            return html
         }
 
         int size() { pages.size() }
