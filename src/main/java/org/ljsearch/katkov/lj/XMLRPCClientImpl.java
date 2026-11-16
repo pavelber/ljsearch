@@ -94,12 +94,15 @@ public class XMLRPCClientImpl implements XMLRPCClient {
 
             for (Object anArray : array) {
                 Map map = (Map) anArray;
-                BlogEntry entry = null;
+                BlogEntry entry;
                 try {
                     entry = new BlogEntry(journal, map);
                 } catch (Exception e) {
-                    logger.error("failed:"+map.get("url"));
-                    throw e;
+                    // One odd entry must not fail the whole day: the day would
+                    // never be marked done and the journal would stop on it on
+                    // every run. Skip it with its fields in the log.
+                    logger.error("Skipping entry that cannot be parsed: " + map.get("url") + " " + describe(map), e);
+                    continue;
                 }
                 result.add(entry);
             }
@@ -112,6 +115,21 @@ public class XMLRPCClientImpl implements XMLRPCClient {
             logger.error(e.toString());
             throw new LJRuntimeException(e.getMessage() == null || e.getMessage().length() == 0 ? e.toString() : e.getMessage(), e);
         }
+    }
+
+    /** Field names with value types, without the post text. */
+    private static String describe(Map map) {
+        StringBuilder sb = new StringBuilder("{");
+        for (Object key : map.keySet()) {
+            Object v = map.get(key);
+            sb.append(key).append(':').append(v == null ? "null" : v.getClass().getSimpleName());
+            if (!"event".equals(key) && !"subject".equals(key) && v != null && !(v instanceof byte[])) {
+                String s = String.valueOf(v);
+                sb.append('=').append(s.length() > 40 ? s.substring(0, 40) + "..." : s);
+            }
+            sb.append(' ');
+        }
+        return sb.append('}').toString();
     }
 
     public FriendCheckResult checkfriends(CheckFriendsArgument argument, int timeout) throws LJRuntimeException {

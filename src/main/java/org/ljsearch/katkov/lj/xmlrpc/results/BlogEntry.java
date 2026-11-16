@@ -55,15 +55,45 @@ public class BlogEntry {
 
 
     public BlogEntry(String journal, Map map) throws UnsupportedEncodingException, ParseException {
-        itemid = (Integer) map.get("itemid");
-        permalink = (String) map.get("url");
-        anum = (Integer) map.get("anum");
+        // LJ does not always send numbers as <int>: on 2026-11-16 a potrebitel_il
+        // post came with one of them as a string, and the plain (Integer) cast
+        // failed the whole day of the journal on every run.
+        Integer id = toInteger(map.get("itemid"));
+        itemid = id == null ? 0 : id;
+        permalink = LJHelpers.getUnicodeText(map.get("url"));
+        anum = toInteger(map.get("anum"));
         subject = LJHelpers.getUnicodeText(map.get("subject"));
         body = LJHelpers.getUnicodeText(map.get("event"));
-        date = LJHelpers.parseDate((String) map.get("eventtime"), DATEFORMAT);
-        security = SecurityType.getInstance((String) map.get("security"));
-        allowmask = (Integer) map.get("allowmask");
-        poster = map.get("poster") == null ? journal : map.get("poster").toString();
+        date = LJHelpers.parseDate(LJHelpers.getUnicodeText(map.get("eventtime")), DATEFORMAT);
+        security = SecurityType.getInstance(LJHelpers.getUnicodeText(map.get("security")));
+        allowmask = toInteger(map.get("allowmask"));
+        poster = map.get("poster") == null ? journal : LJHelpers.getUnicodeText(map.get("poster"));
+    }
+
+    /**
+     * An XML-RPC number that may come as int, i8/double, string or bytes.
+     * null when absent or not an int; allowmask is an unsigned 32-bit mask, so
+     * values above Integer.MAX_VALUE keep their low 32 bits.
+     */
+    static Integer toInteger(Object value) throws UnsupportedEncodingException {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        if (value instanceof Number) {
+            return (int) ((Number) value).longValue();
+        }
+        String s = LJHelpers.getUnicodeText(value).trim();
+        if (s.isEmpty()) {
+            return null;
+        }
+        try {
+            return (int) Long.parseLong(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**
