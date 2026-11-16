@@ -102,10 +102,11 @@ class CommentsClient implements ICommentsClient {
     static final int CONNECT_TIMEOUT_MS = 30 * 1000
     static final int READ_TIMEOUT_MS = 60 * 1000
 
-    // How many parsed pages of one post are kept while the markups are tried.
-    // Bounded because the JVM runs with -Xmx128m and a big thread can have
-    // dozens of pages.
-    static final int PAGE_CACHE_SIZE = 16
+    // How many bytes of raw HTML of one post are kept while the markups are
+    // tried. The cache holds the downloaded bytes, not parsed DOM trees: a DOM
+    // is many times bigger than its HTML, and 16 cached DOMs of a big thread
+    // caused the heap OOMs of 2026-11-07..16. Each markup re-parses the bytes.
+    static final long PAGE_CACHE_MAX_BYTES = 8L * 1024 * 1024
 
     @Override
     Collection<Comment> getComments(String postUrl) {
@@ -174,6 +175,11 @@ class CommentsClient implements ICommentsClient {
 
 
     static Document treeFromUrl(String p_url) {
+        return parseHtml(downloadHtml(p_url))
+    }
+
+    /** One GET of the comments page, with timeouts. Returns the raw bytes. */
+    static byte[] downloadHtml(String p_url) {
         String url = p_url.split("#")[0]
         if (!url.contains("?")) {
             url += "?nojs=1"
@@ -181,6 +187,24 @@ class CommentsClient implements ICommentsClient {
             url = url[0..url.indexOf("?")] + "nojs=1&" + url[url.indexOf("?") + 1..url.length() - 1]
         }
 
+        URLConnection connection = new URL(url).openConnection()
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MS)
+        connection.setReadTimeout(READ_TIMEOUT_MS)
+        InputStream input = connection.getInputStream()
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(64 * 1024)
+            byte[] buffer = new byte[16 * 1024]
+            int n
+            while ((n = input.read(buffer)) != -1) {
+                out.write(buffer, 0, n)
+            }
+            return out.toByteArray()
+        } finally {
+            input.close()
+        }
+    }
+
+    static Document parseHtml(byte[] html) {
         HtmlCleaner cleaner = new HtmlCleaner()
 
         CleanerProperties props = cleaner.getProperties()
@@ -192,53 +216,57 @@ class CommentsClient implements ICommentsClient {
         props.setAllowMultiWordAttributes(true)
         props.setRecognizeUnicodeChars(true)
 
-        // Same single GET and charset as cleaner.clean(URL), plus timeouts.
-        URLConnection connection = new URL(url).openConnection()
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS)
-        connection.setReadTimeout(READ_TIMEOUT_MS)
-        TagNode node
-        InputStream input = connection.getInputStream()
-        try {
-            node = cleaner.clean(input, props.getCharset())
-        } finally {
-            input.close()
-        }
+        // Same charset as cleaner.clean(URL).
+        TagNode node = cleaner.clean(new ByteArrayInputStream(html), props.getCharset())
         //assert page.status_code == 200
         //assert "<title>LiveJournal Bot Policy</title>" not in page.text
         return new DomSerializer(props).createDOM(node)
     }
 
     /**
-     * Parsed pages of one post, shared by all markups. A failed URL is
-     * remembered so that the other markups do not request it again.
+     * Raw HTML of the pages of one post, shared by all markups, so each page
+     * is requested from LiveJournal once. get() parses a fresh DOM every time;
+     * only the caller keeps it, so at most one DOM per caller is alive. A
+     * failed URL is remembered so that the other markups do not request it
+     * again.
      */
     static class PageCache {
         private static final Logger log = LoggerFactory.getLogger(PageCache.class)
         // insertion order: the oldest page is dropped first
-        private final LinkedHashMap<String, Document> pages = new LinkedHashMap<String, Document>()
+        private final LinkedHashMap<String, byte[]> pages = new LinkedHashMap<String, byte[]>()
         private final Map<String, Exception> failed = new HashMap<String, Exception>()
+        private long bytes = 0
 
         Document get(String url) {
             Exception previous = failed[url]
             if (previous != null) {
                 throw previous
             }
-            Document doc = pages[url]
-            if (doc == null) {
+            byte[] html = pages[url]
+            if (html == null) {
                 try {
-                    doc = treeFromUrl(url)
+                    html = CommentsClient.downloadHtml(url)
                 } catch (Exception e) {
                     log.warn("Failed to load comments page {}: {}", url, e.toString())
                     failed[url] = e
                     throw e
                 }
-                pages[url] = doc
-                if (pages.size() > CommentsClient.PAGE_CACHE_SIZE) {
-                    pages.remove(pages.keySet().iterator().next())
+                pages[url] = html
+                bytes += html.length
+                // keep at least the page just loaded
+                while (bytes > CommentsClient.PAGE_CACHE_MAX_BYTES && pages.size() > 1) {
+                    String oldest = pages.keySet().iterator().next()
+                    bytes -= pages.remove(oldest).length
                 }
             }
-            return doc
+            // Qualified call: an unqualified one from this inner class goes
+            // through methodMissing, which turns the byte[] into a List.
+            return CommentsClient.parseHtml(html)
         }
+
+        int size() { pages.size() }
+
+        long sizeInBytes() { bytes }
     }
 
     static def parseTree(Document doc, String posturl, int markupIndex = -1) {
