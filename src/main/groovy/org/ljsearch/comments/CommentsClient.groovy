@@ -140,6 +140,30 @@ class CommentsClient implements ICommentsClient {
         return comments
     }
 
+    /**
+     * For the comments back-fill: like getComments, but a failure is an
+     * exception instead of an empty list. The post page itself must load
+     * (FileNotFoundException for a deleted post, IOException for network
+     * trouble) and must carry the Site.page JSON (NoCommentsJsonException
+     * otherwise, e.g. a Bot Policy page).
+     */
+    Collection<Comment> getCommentsOrFail(String postUrl) {
+        PageCache cache = new PageCache()
+        byte[] first = cache.getHtml(postUrl)
+        if (parseJson(first) == null) {
+            throw new NoCommentsJsonException(postUrl)
+        }
+        Collection<Comment> comments = getJsonComments(postUrl, cache)
+        logger.info(postUrl + " - " + comments.size() + " comments (back-fill)")
+        return comments
+    }
+
+    static class NoCommentsJsonException extends Exception {
+        NoCommentsJsonException(String url) {
+            super("No Site.page comments JSON in " + url)
+        }
+    }
+
     static Collection<Comment> getComments(final String posturl, int markupIndex) {
         return getComments(posturl, markupIndex, new PageCache())
     }
