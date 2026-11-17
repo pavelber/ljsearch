@@ -1,0 +1,37 @@
+[Unit]
+Description=getlj.com search (Spring Boot, embedded Tomcat)
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+# tomcat7 owns the live index (/usr/share/tomcat7/ljsearch) and has it as HOME
+User=tomcat7
+Group=tomcat7
+WorkingDirectory=/usr/share/tomcat7
+Environment=LANG=en_US.UTF-8
+# - socksProxy*: LJ is reached through the autossh SOCKS tunnel, as under
+#   Tomcat 7 (/etc/tomcat7/catalina.properties); localhost (MySQL) bypasses it
+# - add-opens: lets Lucene 5.3 unmap closed index files (also in the WAR manifest)
+# - TLSv1.2: LJ never answers a TLS 1.3 handshake, every call times out
+#   (2026-11-17); Application.main sets it too when it is missing here
+ExecStart=/opt/jdk-17/bin/java \
+    -Xmx512m -XX:+UseSerialGC \
+    -Dfile.encoding=UTF-8 \
+    -Djdk.tls.client.protocols=TLSv1.2 \
+    -Djava.awt.headless=true \
+    -Djava.io.tmpdir=/var/lib/ljsearch/tmp \
+    -DsocksProxyHost=127.0.0.1 -DsocksProxyPort=1338 \
+    --add-opens java.base/java.nio=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.ref=ALL-UNNAMED \
+    -jar /var/lib/ljsearch/ROOT.war \
+    --server.port=8080 \
+    --index.dir=/usr/share/tomcat7/ljsearch \
+    --logging.file.name=/var/log/ljsearch/ljsearch.log
+SuccessExitStatus=143
+# a restart logs in to every journal again: never in a fast loop
+Restart=on-failure
+RestartSec=600
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

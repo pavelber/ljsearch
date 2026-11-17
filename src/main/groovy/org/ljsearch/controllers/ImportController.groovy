@@ -37,7 +37,7 @@ class ImportController {
     @RequestMapping("/import")
     @ResponseBody
     String importFromDb(@RequestParam("journal") String journalName) {
-        Journal journal = repo.findOne(journalName)
+        Journal journal = repo.findById(journalName).orElse(null)
         while (true) {
             LocalDate maxDate = (journal.last ? DateUtils.fromDate(journal.last) : DateUtils.START_DATE).plus(1, ChronoUnit.DAYS);
             if (maxDate.isAfter(LocalDate.now().minusDays(2))) {

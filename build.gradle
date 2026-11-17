@@ -1,82 +1,127 @@
-ext['tomcat.version'] = '7.0.52'
-
-
-group 'bernshtam'
-version '1.0-SNAPSHOT'
-
-apply plugin: 'groovy'
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'war'
-
-
-war {
-    baseName = 'ljsearch'
-    version =  '0.1'
+plugins {
+    id 'groovy'
+    id 'war'
+    id 'org.springframework.boot' version '3.5.7'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
-configurations {
-    providedRuntime
+group = 'bernshtam'
+version = '0.2'
+
+// groovyc takes its bytecode level from these, not from options.release
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
 
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url "https://repo.spring.io/libs-milestone" }
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE")
-    }
+tasks.withType(GroovyCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+    groovyOptions.encoding = 'UTF-8'
 }
 
 repositories {
     mavenCentral()
-    maven { url "https://repo.spring.io/libs-milestone" }
 }
 
+// Lucene stays on 5.3.1 for now: the live index is in the 5.x format, and a
+// new Lucene means rebuilding the index, a separate step.
+
 dependencies {
-    compile 'org.codehaus.groovy:groovy-all:2.4.5'
-    compile 'commons-codec:commons-codec:1.3'
-    compile 'commons-httpclient:commons-httpclient:3.0.1'
-    compile 'org.htmlparser:htmllexer:2.1'
+    implementation 'org.apache.groovy:groovy'
+    implementation 'org.apache.groovy:groovy-json'
+    implementation 'org.apache.groovy:groovy-xml'
 
-    compile 'org.apache.xmlrpc:xmlrpc-client:3.1.3'
-    compile 'org.apache.xmlrpc:xmlrpc-common:3.1.3'
-    compile "org.apache.lucene:lucene-core:5.3.1"
-    compile "org.apache.lucene:lucene-analyzers-common:5.3.1"
-    compile 'org.apache.lucene:lucene-queryparser:5.3.1'
-    compile 'org.apache.lucene:lucene-highlighter:5.3.1'
+    implementation 'commons-codec:commons-codec:1.3'
+    implementation 'commons-httpclient:commons-httpclient:3.0.1'
+    implementation 'org.htmlparser:htmllexer:2.1'
 
-    compile 'org.apache.commons:commons-lang3:3.4'
-    compile 'commons-collections:commons-collections:3.2.1'
+    implementation 'org.apache.xmlrpc:xmlrpc-client:3.1.3'
+    implementation 'org.apache.xmlrpc:xmlrpc-common:3.1.3'
+    implementation "org.apache.lucene:lucene-core:5.3.1"
+    implementation "org.apache.lucene:lucene-analyzers-common:5.3.1"
+    implementation 'org.apache.lucene:lucene-queryparser:5.3.1'
+    implementation 'org.apache.lucene:lucene-highlighter:5.3.1'
 
+    implementation 'org.apache.commons:commons-lang3'
+    implementation 'commons-collections:commons-collections:3.2.1'
 
+    implementation 'org.jsoup:jsoup:1.8.3'
 
-    compile 'org.jsoup:jsoup:1.8.3'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // 8.0.x still supports the server's MySQL 5.7; the 9.x line needs 8.0
+    runtimeOnly 'com.mysql:mysql-connector-j:8.0.33'
 
-    compile 'org.springframework.boot:spring-boot'
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    compile 'org.springframework.boot:spring-boot-starter-data-jpa'
-    compile 'mysql:mysql-connector-java:5.1.31'
-    compile 'commons-dbcp:commons-dbcp:1.4'
+    implementation 'org.webjars:angularjs:1.4.6'
+    implementation 'org.webjars:bootstrap:3.3.5'
+    implementation 'org.webjars:momentjs:2.10.6'
 
-    compile 'org.webjars:angularjs:1.4.6'
-    compile 'org.webjars:bootstrap:3.3.5'
-    compile 'org.webjars:momentjs:2.10.6'
+    implementation 'org.liquibase:liquibase-core'
 
-    compile 'org.liquibase:liquibase-core:3.4.1'
+    implementation 'net.sourceforge.htmlcleaner:htmlcleaner:2.15'
 
-    compile 'net.sourceforge.htmlcleaner:htmlcleaner:2.15'
+    // a plain "java -jar" run uses the embedded Tomcat; a servlet container
+    // (Tomcat 10.1+) ignores it
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
+    testImplementation 'junit:junit:4.13.2'
+    testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.apache.groovy:groovy-sql'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
 
-    compile 'com.code972.hebmorph:hebmorph-lucene:2.0.3'
+// Lucene 5.3 unmaps closed index files through java.nio internals; without
+// these opens it keeps them mapped until GC, and the disk space of merged-away
+// segments is not freed until then.
+def addOpens = 'java.base/java.nio java.base/jdk.internal.ref'
 
+bootWar {
+    archiveFileName = 'ROOT.war'
+    manifest {
+        attributes 'Add-Opens': addOpens
+    }
+}
 
-    testCompile 'org.springframework:spring-test'
-    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+// The server runs JDK 17. A WAR once had Groovy classes for Java 21 (class
+// version 65) and failed there with UnsupportedClassVersionError.
+def checkWarBytecode = tasks.register('checkWarBytecode') {
+    def war = tasks.named('bootWar').flatMap { it.archiveFile }
+    inputs.file(war)
+    doLast {
+        def wrong = []
+        project.zipTree(war.get().asFile).matching { include 'WEB-INF/classes/**/*.class' }.each { File f ->
+            byte[] b = new byte[8]
+            f.withInputStream { it.read(b) }
+            int major = ((b[6] & 0xff) << 8) | (b[7] & 0xff)
+            if (major > 61) {
+                wrong << "${f.name} (class version ${major})"
+            }
+        }
+        if (wrong) {
+            throw new GradleException("Classes newer than Java 17 in the WAR: ${wrong.take(5)}")
+        }
+    }
+}
+tasks.named('bootWar') { finalizedBy checkWarBytecode }
 
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+war {
+    enabled = false
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // these log in to LiveJournal / load its pages: run by hand only. A run
+    // with the empty test password got this machine's IP banned for login
+    // failures (2026-11-17).
+    exclude '**/XMLRPCClientImplTest*', '**/HTTPClientImplTest*', '**/ConvenientClientTest*'
+    jvmArgs '--add-opens', 'java.base/java.nio=ALL-UNNAMED', '--add-opens', 'java.base/jdk.internal.ref=ALL-UNNAMED'
 }

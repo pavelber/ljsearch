@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- logicalFilePath: Liquibase 3.4 stored this path for every change set; it
+     is part of the change set identity, so a new Liquibase keeps it to see
+     them as done. -->
 <databaseChangeLog
+        logicalFilePath="classpath:/db/changelog/db.changelog-master.xml"
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog

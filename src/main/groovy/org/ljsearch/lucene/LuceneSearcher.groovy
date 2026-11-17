@@ -2,7 +2,8 @@ package org.ljsearch.lucene
 
 import groovy.transform.CompileStatic
 import org.apache.commons.lang3.StringUtils
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.DateTools
 import org.apache.lucene.document.Document
@@ -26,7 +27,7 @@ import java.util.stream.Collectors
 @CompileStatic
 class LuceneSearcher implements ISearcher {
 
-    private static final Logger logger = Logger.getLogger(LuceneSearcher.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(LuceneSearcher.class);
 
     @Autowired
     QueryCreator queryCreator

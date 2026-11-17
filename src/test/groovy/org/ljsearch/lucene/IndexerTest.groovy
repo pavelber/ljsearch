@@ -19,7 +19,11 @@ class IndexerTest extends Specification {
     public static final String ELCY_ = "elcy_"
 
     LuceneIndexer indexer = new LuceneIndexer()
-    LuceneSearcher seacher = new LuceneSearcher()
+    // both test journals are public
+    LuceneSearcher seacher = new LuceneSearcher(queryCreator: new QueryCreator(
+            repo: [findByPrrivate: { boolean b ->
+                [new org.ljsearch.entity.Journal(journal: POTREBITEL_IL), new org.ljsearch.entity.Journal(journal: TOURISM_IL)] }]
+                    as org.ljsearch.entity.IJournalRepository))
 
     def setup() {
         Directory index = new RAMDirectory();

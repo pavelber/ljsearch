@@ -1,6 +1,7 @@
 package org.ljsearch.lucene;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -22,8 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -31,7 +32,7 @@ import java.util.Date;
 @Service
 @PropertySource("classpath:ljsearch.properties")
 public class LuceneIndexer implements IIndexer {
-    private static final Logger logger = Logger.getLogger(LuceneIndexer.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(LuceneIndexer.class);
 
     /* IndexWriter is completely thread safe */
     protected IndexWriter indexWriter;
@@ -52,7 +53,7 @@ public class LuceneIndexer implements IIndexer {
                 }
             }
         } catch (IOException ex) {
-            logger.error(ex);
+            logger.error("Index failure", ex);
         }
     }
 
@@ -94,7 +95,7 @@ public class LuceneIndexer implements IIndexer {
                 }
             }
         } catch (IOException ex) {
-            logger.error(ex);
+            logger.error("Index failure", ex);
             throw new RuntimeException(ex);
         }
 

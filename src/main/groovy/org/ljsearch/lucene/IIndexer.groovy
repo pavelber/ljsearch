@@ -2,7 +2,7 @@ package org.ljsearch.lucene
 
 import org.ljsearch.IndexedType
 
-import javax.annotation.PreDestroy
+import jakarta.annotation.PreDestroy
 
 /**
  * Created by Pavel on 10/5/2015.

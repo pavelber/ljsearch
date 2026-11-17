@@ -1,7 +1,7 @@
 package org.ljsearch.entity
 
-import javax.persistence.Entity
-import javax.persistence.Id
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
 
 /**
  * Created by Pavel on 10/8/2015.
